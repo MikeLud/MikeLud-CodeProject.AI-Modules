@@ -1,4 +1,40 @@
 [
+    {
+    "ModuleId": "ALPRYOL11",
+    "Name": "License Plate Reader",
+    "Version": "1.0.0",
+    "PublishingInfo": {
+      "Description": "Detects and readers single-line and multi-line license plates using YOLO object detection and the PaddleOCR toolkit",
+      "IconURL": "",
+      "Category": "Computer Vision",
+      "Stack": "Python, PaddlePaddle",
+      "License": "SSPL",
+      "LicenseUrl": "https://www.mongodb.com/licensing/server-side-public-license",
+      "Author": "Mike Lud",
+      "Homepage": "",
+      "BasedOn": "",
+      "BasedOnUrl": ""
+    },
+    "InstallOptions": {
+      "Platforms": [
+        "all",
+        "!windows-arm64"
+      ],
+      "ModuleReleases": [
+        {
+          "ModuleVersion": "1.0.0",
+          "ServerVersionRange": [
+            "2.9.4",
+            ""
+          ],
+          "ReleaseDate": "2025-10-05",
+          "ReleaseNotes": null,
+          "Importance": null
+        }
+      ]
+    },
+    "Downloads": 0
+  },
   {
     "ModuleId": "ALPR",
     "Name": "License Plate Reader",
