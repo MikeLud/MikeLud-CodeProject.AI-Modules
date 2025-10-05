@@ -1,6 +1,6 @@
 [
     {
-    "ModuleId": "ALPRYOL11",
+    "ModuleId": "ALPRYOL11_ONNX",
     "Name": "License Plate Reader",
     "Version": "1.0.0",
     "PublishingInfo": {
