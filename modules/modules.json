@@ -4,16 +4,16 @@
     "Name": "License Plate Reader (YOLO11-ONNX)",
     "Version": "1.0.0",
     "PublishingInfo": {
-      "Description": "Detects and readers single-line and multi-line license plates using YOLO object detection and the PaddleOCR toolkit",
+      "Description": "Detects and readers single-line and multi-line license plates using YOLO11 models and the ONNX Runtime",
       "IconURL": "",
       "Category": "Computer Vision",
-      "Stack": "Python, PaddlePaddle",
-      "License": "SSPL",
-      "LicenseUrl": "https://www.mongodb.com/licensing/server-side-public-license",
+      "Stack": "Python, ONNX, YOLO",
+      "License": "MIT",
+      "LicenseUrl": "https://opensource.org/licenses/MIT",
       "Author": "Mike Lud",
-      "Homepage": "",
-      "BasedOn": "",
-      "BasedOnUrl": ""
+      "Homepage": "https://github.com/MikeLud/MikeLud-CodeProject.AI-Modules",
+      "BasedOn": "YOLO11 models with ONNX Runtime",
+      "BasedOnUrl": "https://onnxruntime.ai/"
     },
     "InstallOptions": {
       "Platforms": [
