@@ -1,0 +1,12 @@
+#! Python3.8
+
+# Essential dependencies for ALPR module
+numpy>=1.23.0,<=2.1.1          # Installing NumPy, a package for scientific computing
+opencv-python>=4.6.0           # Installing OpenCV, the Open source Computer Vision library
+
+# ONNX Runtime with DirectML support (works on both CPU and Windows GPU)
+onnxruntime-directml==1.23.0   # Installing ONNX Runtime with DirectML support for Windows
+
+CodeProject-AI-SDK              # Installing the CodeProject.AI SDK
+
+# last line empty.

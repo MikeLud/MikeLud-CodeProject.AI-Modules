@@ -1,0 +1,9 @@
+{
+  "Modules": {
+    "ALPRYOLO11": {
+      "LaunchSettings": {
+        "Runtime": "python3.10"
+      }
+    }
+  }
+}

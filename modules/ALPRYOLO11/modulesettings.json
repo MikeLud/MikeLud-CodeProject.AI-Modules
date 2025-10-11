@@ -1,0 +1,256 @@
+{
+  "Modules": {
+    "ALPRYOLO11": {
+      "Name": "License Plate Recognition (YOLO11)",
+      "Version": "1.0.0",
+      "PublishingInfo" : {
+        "Description" : "Provides Automatic License Plate Recognition (ALPR) using YOLO11 models",
+        "Category"    : "Computer Vision",
+        "Stack"       : "Python, ONNX, YOLO",
+        "License"     : "MIT",
+        "LicenseUrl"  : "https://opensource.org/licenses/MIT",
+        "Author"      : "Mike Lud",
+        "Homepage"    : "https://github.com/MikeLud/MikeLud-CodeProject.AI-Modules",
+        "BasedOn"     : "YOLO11 models with ONNX Runtime",
+        "BasedOnUrl"  : "https://onnxruntime.ai/"
+      },
+      // Launch instructions
+      "LaunchSettings": {
+        "AutoStart"          : false,
+        "FilePath"           : "alpr_adapter.py",
+        "Runtime"            : "python3.10",
+        "RuntimeLocation"    : "Local", 
+        "PostStartPauseSecs" : 0,
+        "Queue"              : "alpr_queue",
+        "Parallelism"        : 0
+      },
+      "EnvironmentVariables": {
+        "MODELS_DIR"                : "%CURRENT_MODULE_PATH%/models",
+        "ENABLE_STATE_DETECTION"    : "False",
+        "ENABLE_VEHICLE_DETECTION"  : "False",
+        "PLATE_DETECTOR_CONFIDENCE" : "0.45",
+        "STATE_CLASSIFIER_CONFIDENCE": "0.45",
+        "CHAR_DETECTOR_CONFIDENCE"  : "0.40",
+        "CHAR_CLASSIFIER_CONFIDENCE": "0.40",
+        "VEHICLE_DETECTOR_CONFIDENCE": "0.45",
+        "VEHICLE_CLASSIFIER_CONFIDENCE": "0.45",
+        "PLATE_ASPECT_RATIO"        : "4.0",
+        "CORNER_DILATION_PIXELS"    : "5",
+        "CHAR_BOX_DILATION_WIDTH"   : "0",
+        "CHAR_BOX_DILATION_HEIGHT"  : "0",
+        "USE_ONNX"                  : "True",
+        "USE_CUDA"                  : "False",
+        "USE_DIRECTML"              : "True",
+        "ONNX_MODELS_DIR"           : "%CURRENT_MODULE_PATH%/models",
+        "SAVE_DEBUG_IMAGES"         : "False",
+        "DEBUG_IMAGES_DIR"          : "%CURRENT_MODULE_PATH%/debug_images"
+      },
+      "GpuOptions" : {
+        "InstallGPU"            : true,
+        "EnableGPU"             : true,
+        "AcceleratorDeviceName" : null,
+        "HalfPrecision"         : "enable"
+      },
+      "InstallOptions" : {
+        "Platforms":      [ "all" ],
+        "ModuleReleases": [
+          { "ModuleVersion": "1.0.0", "ServerVersionRange": [ "2.9.4", "" ], "ReleaseDate": "2025-02-28", "ReleaseNotes": "Initial Release", "Importance": "Major" }
+        ]
+      },
+      "ModelRequirements" : [{
+          "Task": "Object Detection",
+          "Architecture": "YOLO11",
+          "Format": "ONNX"
+      }],
+      "UIElements" : {
+        "Menus": [ {
+          "Label": "State Detection",
+          "Options": [
+            { "Label": "Enable state detection",    "Setting": "ENABLE_STATE_DETECTION", "Value": "False" },
+            { "Label": "Disable state detection",   "Setting": "ENABLE_STATE_DETECTION", "Value": "False" }
+          ]
+        },
+        {
+          "Label": "Vehicle Detection",
+          "Options": [
+            { "Label": "Enable vehicle detection",  "Setting": "ENABLE_VEHICLE_DETECTION", "Value": "False" },
+            { "Label": "Disable vehicle detection", "Setting": "ENABLE_VEHICLE_DETECTION", "Value": "False" }
+          ]
+        },
+        {
+          "Label": "Debug Image Saving",
+          "Options": [
+            { "Label": "Disable debug images (Default)", "Setting": "SAVE_DEBUG_IMAGES", "Value": "False" },
+            { "Label": "Enable debug images", "Setting": "SAVE_DEBUG_IMAGES", "Value": "True" }
+          ]
+        },
+        {
+          "Label": "License Plate Aspect Ratio",
+          "Options": [
+            { "Label": "2.5 (US Standard)",   "Setting": "PLATE_ASPECT_RATIO", "Value": "2.5" },
+            { "Label": "3.375 (US/EU)",       "Setting": "PLATE_ASPECT_RATIO", "Value": "3.375" },
+            { "Label": "4.75 (EU Standard)",  "Setting": "PLATE_ASPECT_RATIO", "Value": "4.75" },
+            { "Label": "None (Auto detect)",  "Setting": "PLATE_ASPECT_RATIO", "Value": "0" }
+          ]
+        },
+        {
+          "Label": "Corner Dilation",
+          "Options": [
+            { "Label": "None (0 PIXELS)",       "Setting": "CORNER_DILATION_PIXELS", "Value": "0" },
+            { "Label": "Minimal (3 PIXELS)",    "Setting": "CORNER_DILATION_PIXELS", "Value": "3" },
+            { "Label": "Standard (5 PIXELS)",   "Setting": "CORNER_DILATION_PIXELS", "Value": "5" },
+            { "Label": "Enhanced (10 PIXELS)",  "Setting": "CORNER_DILATION_PIXELS", "Value": "10" },
+            { "Label": "Maximum (15 PIXELS)",   "Setting": "CORNER_DILATION_PIXELS", "Value": "15" }
+          ]
+        },
+        {
+          "Label": "Character Box Dilation Width",
+          "Options": [
+            { "Label": "None (0 PIXELS)",      "Setting": "CHAR_BOX_DILATION_WIDTH", "Value": "0" },
+            { "Label": "Minimal (3 PIXELS)",   "Setting": "CHAR_BOX_DILATION_WIDTH", "Value": "3" },
+            { "Label": "Standard (5 PIXELS)",  "Setting": "CHAR_BOX_DILATION_WIDTH", "Value": "5" },
+            { "Label": "Enhanced (10 PIXELS)", "Setting": "CHAR_BOX_DILATION_WIDTH", "Value": "10" },
+            { "Label": "Maximum (15 PIXELS)",  "Setting": "CHAR_BOX_DILATION_WIDTH", "Value": "15" }
+          ]
+        },
+        {
+          "Label": "Character Box Dilation Height",
+          "Options": [
+            { "Label": "None (0 PIXELS)",      "Setting": "CHAR_BOX_DILATION_HEIGHT", "Value": "0" },
+            { "Label": "Minimal (3 PIXELS)",   "Setting": "CHAR_BOX_DILATION_HEIGHT", "Value": "3" },
+            { "Label": "Standard (5 PIXELS)",  "Setting": "CHAR_BOX_DILATION_HEIGHT", "Value": "5" },
+            { "Label": "Enhanced (10 PIXELS)", "Setting": "CHAR_BOX_DILATION_HEIGHT", "Value": "10" },
+            { "Label": "Maximum (15 PIXELS)",  "Setting": "CHAR_BOX_DILATION_HEIGHT", "Value": "15" }
+          ]
+        },
+        {
+          "Label": "Plate Detection Confidence",
+          "Options": [
+            { "Label": "Very High (90%)",  "Setting": "PLATE_DETECTOR_CONFIDENCE", "Value": "0.90" },
+            { "Label": "High (85%)",       "Setting": "PLATE_DETECTOR_CONFIDENCE", "Value": "0.85" },
+            { "Label": "Medium (80%)",     "Setting": "PLATE_DETECTOR_CONFIDENCE", "Value": "0.80" },
+            { "Label": "Low (75%)",        "Setting": "PLATE_DETECTOR_CONFIDENCE", "Value": "0.75" },
+            { "Label": "Very Low (70%)",   "Setting": "PLATE_DETECTOR_CONFIDENCE", "Value": "0.70" }
+          ]
+        },
+        {
+          "Label": "Character Detection Confidence",
+          "Options": [
+            { "Label": "Very High (90%)", "Setting": "CHAR_DETECTOR_CONFIDENCE", "Value": "0.90" },
+            { "Label": "High (80%)",      "Setting": "CHAR_DETECTOR_CONFIDENCE", "Value": "0.80" },
+            { "Label": "Medium (70%)",    "Setting": "CHAR_DETECTOR_CONFIDENCE", "Value": "0.70" },
+            { "Label": "Low (60%)",       "Setting": "CHAR_DETECTOR_CONFIDENCE", "Value": "0.60" },
+            { "Label": "Very Low (50%)",  "Setting": "CHAR_DETECTOR_CONFIDENCE", "Value": "0.50" }
+          ]
+        },
+        {
+          "Label": "Character Recognition Confidence",
+          "Options": [
+            { "Label": "Very High (65%)", "Setting": "CHAR_CLASSIFIER_CONFIDENCE", "Value": "0.65" },
+            { "Label": "High (55%)",      "Setting": "CHAR_CLASSIFIER_CONFIDENCE", "Value": "0.55" },
+            { "Label": "Medium (45%)",    "Setting": "CHAR_CLASSIFIER_CONFIDENCE", "Value": "0.45" },
+            { "Label": "Low (35%)",       "Setting": "CHAR_CLASSIFIER_CONFIDENCE", "Value": "0.35" },
+            { "Label": "Very Low (25%)",  "Setting": "CHAR_CLASSIFIER_CONFIDENCE", "Value": "0.25" }
+          ]
+        },
+        {
+          "Label": "State Recognition Confidence",
+          "Options": [
+            { "Label": "Very High (65%)", "Setting": "STATE_CLASSIFIER_CONFIDENCE", "Value": "0.65" },
+            { "Label": "High (55%)",      "Setting": "STATE_CLASSIFIER_CONFIDENCE", "Value": "0.55" },
+            { "Label": "Medium (45%)",    "Setting": "STATE_CLASSIFIER_CONFIDENCE", "Value": "0.45" },
+            { "Label": "Low (35%)",       "Setting": "STATE_CLASSIFIER_CONFIDENCE", "Value": "0.35" },
+            { "Label": "Very Low (25%)",  "Setting": "STATE_CLASSIFIER_CONFIDENCE", "Value": "0.25" }
+          ]
+        },
+        {
+          "Label": "Vehicle Detection Confidence",
+          "Options": [
+            { "Label": "Very High (65%)", "Setting": "VEHICLE_DETECTOR_CONFIDENCE,VEHICLE_CLASSIFIER_CONFIDENCE", "Value": "0.65,0.65" },
+            { "Label": "High (55%)",      "Setting": "VEHICLE_DETECTOR_CONFIDENCE,VEHICLE_CLASSIFIER_CONFIDENCE", "Value": "0.55,0.55" },
+            { "Label": "Medium (45%)",    "Setting": "VEHICLE_DETECTOR_CONFIDENCE,VEHICLE_CLASSIFIER_CONFIDENCE", "Value": "0.45,0.45" },
+            { "Label": "Low (35%)",       "Setting": "VEHICLE_DETECTOR_CONFIDENCE,VEHICLE_CLASSIFIER_CONFIDENCE", "Value": "0.35,0.35" },
+            { "Label": "Very Low (25%)",  "Setting": "VEHICLE_DETECTOR_CONFIDENCE,VEHICLE_CLASSIFIER_CONFIDENCE", "Value": "0.25,0.25" }
+          ]
+        }]
+      },
+      "RouteMaps": [
+        {
+          "Name": "ALPR Detection",
+          "Route": "vision/alpr",
+          "Method": "POST",
+          "Command": "detect",
+          "Description": "Detects license plates and vehicles in an image.",
+          "Inputs": [
+            {
+              "Name": "image",
+              "Type": "File",
+              "Description": "The HTTP file object (image) to be analyzed."
+            },
+            {
+              "Name": "operation",
+              "Type": "String",
+              "Description": "The type of detection to perform: 'plate' (license plates only), 'vehicle' (vehicles only), or 'full' (complete analysis). Default is 'full'.",
+              "DefaultValue": "full"
+            },
+            {
+              "Name": "min_confidence",
+              "Type": "Float",
+              "Description": "The minimum confidence level for detection. In the range 0.0 to 1.0. Default 0.4.",
+              "DefaultValue": 0.4,
+              "MinValue": 0.0,
+              "MaxValue": 1.0
+            }
+          ],
+          "Outputs": [
+            {
+              "Name": "success",
+              "Type": "Boolean",
+              "Description": "True if successful."
+            },
+            {
+              "Name": "message",
+              "Type": "String",
+              "Description": "A summary of the inference operation."
+            },
+            {
+              "Name": "error",
+              "Type": "String",
+              "Description": "(Optional) An description of the error if success was false."
+            },
+            {
+              "Name": "plates",
+              "Type": "Object[]",
+              "Description": "(When operation is 'plate' or 'full') An array of license plate objects with coordinates, license numbers, characters, and confidence scores."
+            },
+            {
+              "Name": "count",
+              "Type": "Integer",
+              "Description": "(When operation is 'plate' or 'vehicle') The number of license plates or vehicles found."
+            },
+            {
+              "Name": "vehicles",
+              "Type": "Object[]",
+              "Description": "(When operation is 'vehicle' or 'full') An array of vehicle objects with coordinates, make, model, and confidence scores."
+            },
+            {
+              "Name": "analysis",
+              "Type": "Object",
+              "Description": "(When operation is 'full') An object containing plates, vehicles, and counts for each."
+            },
+            {
+              "Name": "inferenceMs",
+              "Type": "Integer",
+              "Description": "The time (ms) to perform the AI inference."
+            },
+            {
+              "Name": "processMs",
+              "Type": "Integer",
+              "Description": "The time (ms) to process the image (includes inference and image manipulation operations)."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
