@@ -34,10 +34,10 @@
         "CHAR_CLASSIFIER_CONFIDENCE": "0.40",
         "VEHICLE_DETECTOR_CONFIDENCE": "0.45",
         "VEHICLE_CLASSIFIER_CONFIDENCE": "0.45",
-        "PLATE_ASPECT_RATIO"        : "4.0",
+        "PLATE_ASPECT_RATIO"        : "2.5",
         "CORNER_DILATION_PIXELS"    : "5",
         "CHAR_BOX_DILATION_WIDTH"   : "0",
-        "CHAR_BOX_DILATION_HEIGHT"  : "0",
+        "CHAR_BOX_DILATION_HEIGHT"  : "3",
         "USE_ONNX"                  : "True",
         "USE_CUDA"                  : "False",
         "USE_DIRECTML"              : "True",
@@ -52,7 +52,7 @@
         "HalfPrecision"         : "enable"
       },
       "InstallOptions" : {
-        "Platforms":      [ "all" ],
+        "Platforms":      [ "windows" ],
         "ModuleReleases": [
           { "ModuleVersion": "1.0.0", "ServerVersionRange": [ "2.9.4", "" ], "ReleaseDate": "2025-02-28", "ReleaseNotes": "Initial Release", "Importance": "Major" }
         ]

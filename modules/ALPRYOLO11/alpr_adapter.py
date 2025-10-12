@@ -93,7 +93,7 @@ class ALPRAdapter(ModuleRunner):
         self.config.use_directml = self.use_DirectML
         
         # Set inference device information for ModuleRunner
-        self.can_use_GPU = self.system_info.hasTorchCuda or self.system_info.hasTorchMPS
+        self.can_use_GPU = self.system_info.hasTorchCuda or self.system_info.hasTorchMPS or self.use_DirectML
 
         if self.use_CUDA:
             self.inference_device = "GPU"
@@ -103,6 +103,9 @@ class ALPRAdapter(ModuleRunner):
             self.inference_device = "GPU"
             self.inference_library = "MPS"
             device = "mps"
+        elif self.use_DirectML:
+            self.inference_device  = "GPU"
+            self.inference_library = "DirectML"
         else:
             device = "cpu"
 

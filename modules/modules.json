@@ -17,8 +17,7 @@
     },
     "InstallOptions": {
       "Platforms": [
-        "all",
-        "!windows-arm64"
+        "windows"
       ],
       "ModuleReleases": [
         {

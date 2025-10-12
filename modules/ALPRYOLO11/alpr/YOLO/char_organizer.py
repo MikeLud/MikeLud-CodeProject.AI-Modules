@@ -77,7 +77,22 @@ class CharacterOrganizer:
             boxes = np.array(boxes)
             original_indices = np.array(original_indices)
             
+            # Debug: Print raw box coordinates
+            if self.save_debug_images:
+                print(f"\n*** RAW CHARACTER BOXES (before sorting) ***")
+                print(f"  Total characters: {len(valid_chars)}")
+                for i, (char, box) in enumerate(zip(valid_chars, boxes)):
+                    x1, y1, x2, y2 = box
+                    center_x = (x1 + x2) / 2
+                    center_y = (y1 + y2) / 2
+                    print(f"  Char {i}: box=[{x1:.1f}, {y1:.1f}, {x2:.1f}, {y2:.1f}], center=({center_x:.1f}, {center_y:.1f})")
+                print(f"  Box format assumption: [x1, y1, x2, y2]")
+                print(f"  Centers calculation: [(box[2]+box[0])/2, (box[3]+box[1])/2]")
+            
             # Calculate important metrics
+            # CRITICAL: Verify box format is [x1, y1, x2, y2]
+            # box[0], box[2] should be X coordinates (left, right)
+            # box[1], box[3] should be Y coordinates (top, bottom)
             centers = np.array([[(box[2] + box[0]) / 2, (box[3] + box[1]) / 2] for box in boxes])
             heights = boxes[:, 3] - boxes[:, 1]
             widths = boxes[:, 2] - boxes[:, 0]
@@ -87,10 +102,10 @@ class CharacterOrganizer:
                 return valid_chars
                 
             # Special case: only two characters - simple left-to-right ordering
-            # Use stable sort with Y as secondary key and original index as tiebreaker
+            # Use stable sort with Y as secondary key
             if len(valid_chars) == 2:
-                # Sort by X, then Y, then original index for stability
-                sorted_indices = sorted(range(2), key=lambda i: (centers[i][0], centers[i][1], original_indices[i]))
+                # Sort by X, then Y
+                sorted_indices = sorted(range(2), key=lambda i: (centers[i][0], centers[i][1]))
                 return [valid_chars[sorted_indices[0]], valid_chars[sorted_indices[1]]]
             
             # Determine if there are multiple lines using adaptive thresholding
@@ -117,6 +132,8 @@ class CharacterOrganizer:
                 print(f"  Is multiline: {is_multiline}")
                 print(f"  Has overlaps: {has_overlaps}")
                 print(f"  Character count: {len(valid_chars)}")
+                print(f"  Character centers (X, Y): {[(f'{c[0]:.1f}', f'{c[1]:.1f}') for c in centers]}")
+                print(f"  Character boxes: {[char.get('box', []) for char in valid_chars]}")
             
             # Handle differently based on layout complexity
             if has_mixed_layout:
@@ -152,6 +169,26 @@ class CharacterOrganizer:
             # Remove temporary original_index field before returning
             for char in organized_chars:
                 char.pop('_original_index', None)
+            
+            # Debug: Show final ordering
+            if self.save_debug_images:
+                print(f"\n*** FINAL CHARACTER ORDER ***")
+                print(f"  Sorting method used: {('mixed layout' if has_mixed_layout else 'multiline' if is_multiline else 'single-line with overlaps' if has_overlaps else 'single-line')}")
+                for i, char in enumerate(organized_chars):
+                    box = char.get('box', [0, 0, 0, 0])
+                    center_x = (box[0] + box[2]) / 2
+                    center_y = (box[1] + box[3]) / 2
+                    print(f"  Position {i}: box={[f'{b:.1f}' for b in box]}, center_x={center_x:.1f}, center_y={center_y:.1f}")
+                    
+                # Show expected left-to-right order
+                char_boxes = [(char.get('box', [0,0,0,0]), i) for i, char in enumerate(organized_chars)]
+                sorted_by_x = sorted(char_boxes, key=lambda x: (x[0][0] + x[0][2])/2)
+                expected_order = [idx for _, idx in sorted_by_x]
+                actual_order = list(range(len(organized_chars)))
+                if expected_order != actual_order:
+                    print(f"  WARNING: Order mismatch!")
+                    print(f"    Expected (by X coord): {expected_order}")
+                    print(f"    Actual order: {actual_order}")
             
             return organized_chars
         
@@ -263,11 +300,8 @@ class CharacterOrganizer:
 
     def _handle_overlapping_characters(self, characters, boxes, centers):
         """Special handling for overlapping characters."""
-        # Get original indices from characters
-        original_indices = np.array([char.get('_original_index', i) for i, char in enumerate(characters)])
-        
-        # Stable sort: X, then Y, then original index
-        x_sorted_indices = np.lexsort((original_indices, centers[:, 1], centers[:, 0]))
+        # Stable sort: X, then Y
+        x_sorted_indices = np.lexsort((centers[:, 1], centers[:, 0]))
         
         groups = []
         current_group = [x_sorted_indices[0]]
@@ -291,8 +325,8 @@ class CharacterOrganizer:
         organized_indices = []
         for group in groups:
             if len(group) > 1:
-                # Stable sort within group: Y, then original index
-                sorted_group = sorted(group, key=lambda idx: (centers[idx][1], original_indices[idx]))
+                # Stable sort within group: Y coordinate only
+                sorted_group = sorted(group, key=lambda idx: centers[idx][1])
             else:
                 sorted_group = group
             organized_indices.extend(sorted_group)
@@ -321,8 +355,8 @@ class CharacterOrganizer:
         horizontal_orig_indices = original_indices[horizontal_indices] if len(horizontal_indices) > 0 else np.array([])
         
         if len(horizontal_chars) > 0:
-            # Stable sort: X, then Y, then original index
-            h_sorted_indices = np.lexsort((horizontal_orig_indices, horizontal_centers[:, 1], horizontal_centers[:, 0]))
+            # Stable sort: X, then Y
+            h_sorted_indices = np.lexsort((horizontal_centers[:, 1], horizontal_centers[:, 0]))
             sorted_horizontal = [horizontal_chars[i] for i in h_sorted_indices]
         else:
             sorted_horizontal = []
@@ -331,8 +365,8 @@ class CharacterOrganizer:
         vertical_centers_array = centers[vertical_indices]
         vertical_orig_indices = original_indices[vertical_indices]
         
-        # Stable sort: Y, then X, then original index
-        v_sorted_indices = np.lexsort((vertical_orig_indices, vertical_centers_array[:, 0], vertical_centers_array[:, 1]))
+        # Stable sort: Y, then X
+        v_sorted_indices = np.lexsort((vertical_centers_array[:, 0], vertical_centers_array[:, 1]))
         sorted_vertical = [vertical_chars_list[i] for i in v_sorted_indices]
         
         if vertical_on_left:
@@ -352,8 +386,8 @@ class CharacterOrganizer:
         y_sorted = y_coords[y_sorted_indices]
         
         if len(y_sorted) < 2:
-            # Stable sort: X, then Y, then original index
-            sorted_indices = np.lexsort((original_indices, centers[:, 1], centers[:, 0]))
+            # Edge case: 0 or 1 characters - sort by X, then Y
+            sorted_indices = np.lexsort((centers[:, 1], centers[:, 0]))
             return [characters[idx] for idx in sorted_indices]
         
         gaps = []
@@ -376,9 +410,9 @@ class CharacterOrganizer:
                 else:
                     bottom_line.append(i)
             
-            # Sort each line by X coordinate (with Y and original index for stability)
-            top_line.sort(key=lambda idx: (centers[idx][0], centers[idx][1], original_indices[idx]))
-            bottom_line.sort(key=lambda idx: (centers[idx][0], centers[idx][1], original_indices[idx]))
+            # Sort each line by X coordinate (with Y for close X values)
+            top_line.sort(key=lambda idx: (centers[idx][0], centers[idx][1]))
+            bottom_line.sort(key=lambda idx: (centers[idx][0], centers[idx][1]))
             
             organized_chars = []
             for idx in top_line:
@@ -395,8 +429,8 @@ class CharacterOrganizer:
         else:
             if self.save_debug_images:
                 print(f"SIMPLE METHOD: Single line detected")
-            # Stable sort: X, then Y, then original index
-            sorted_indices = np.lexsort((original_indices, centers[:, 1], centers[:, 0]))
+            # Stable sort: X, then Y
+            sorted_indices = np.lexsort((centers[:, 1], centers[:, 0]))
             return [characters[idx] for idx in sorted_indices]
 
     def _organize_single_line_characters(self, characters, centers, vertical_chars, original_indices):
@@ -434,8 +468,14 @@ class CharacterOrganizer:
                 original_indices = original_indices[filtered_indices]
         
         if np.all(vertical_chars) or not np.any(vertical_chars):
-            # Stable sort: X, then Y, then original index
-            indices = np.lexsort((original_indices, centers[:, 1], centers[:, 0]))
+            # Stable sort: X, then Y (original_index only for true ties)
+            if self.save_debug_images:
+                print(f"\n*** SINGLE-LINE PATH: All same orientation ***")
+                print(f"  Centers before sort: {[(f'{c[0]:.1f}', f'{c[1]:.1f}') for c in centers]}")
+            indices = np.lexsort((centers[:, 1], centers[:, 0]))
+            if self.save_debug_images:
+                print(f"  Sorted indices: {indices}")
+                print(f"  X coords in sorted order: {[f'{centers[idx][0]:.1f}' for idx in indices]}")
             return [characters[idx] for idx in indices]
 
         num_vertical = np.sum(vertical_chars)
@@ -443,8 +483,8 @@ class CharacterOrganizer:
         if num_vertical <= 2:
             if self.save_debug_images:
                 print(f"*** SINGLE LINE: Treating as horizontal plate (only {num_vertical} vertical chars) ***")
-            # Stable sort: X, then Y, then original index
-            indices = np.lexsort((original_indices, centers[:, 1], centers[:, 0]))
+            # Stable sort: X, then Y
+            indices = np.lexsort((centers[:, 1], centers[:, 0]))
             return [characters[idx] for idx in indices]
         
         total_chars = len(characters)
@@ -452,8 +492,8 @@ class CharacterOrganizer:
         if num_vertical / total_chars > 0.7:
             if self.save_debug_images:
                 print(f"*** SINGLE LINE: Treating as rotated text ({num_vertical}/{total_chars} vertical) ***")
-            # Stable sort: X, then Y, then original index
-            indices = np.lexsort((original_indices, centers[:, 1], centers[:, 0]))
+            # Stable sort: X, then Y
+            indices = np.lexsort((centers[:, 1], centers[:, 0]))
             return [characters[idx] for idx in indices]
 
         if self.save_debug_images:
@@ -474,10 +514,10 @@ class CharacterOrganizer:
             else:
                 horizontal.append(i)
 
-        # Stable sort with original index as final tiebreaker
-        start_vertical.sort(key=lambda idx: (centers[idx][0], centers[idx][1], original_indices[idx]))
-        horizontal.sort(key=lambda idx: (centers[idx][0], centers[idx][1], original_indices[idx]))
-        end_vertical.sort(key=lambda idx: (centers[idx][0], centers[idx][1], original_indices[idx]))
+        # Stable sort by spatial coordinates only
+        start_vertical.sort(key=lambda idx: (centers[idx][0], centers[idx][1]))
+        horizontal.sort(key=lambda idx: (centers[idx][0], centers[idx][1]))
+        end_vertical.sort(key=lambda idx: (centers[idx][0], centers[idx][1]))
 
         all_indices = start_vertical + horizontal + end_vertical
         return [characters[idx] for idx in all_indices]
