@@ -49,19 +49,28 @@ def _detect_directml_compatible_gpu() -> Optional[int]:
                     if gpus:
                         print(f"Detected GPUs: {gpus}")
                         
-                        # Prioritize dedicated GPUs over integrated
+                        # First pass: Prioritize dedicated GPUs over integrated
                         # Look for NVIDIA, AMD, or Intel Arc (discrete GPUs)
                         for idx, gpu in enumerate(gpus):
                             gpu_lower = gpu.lower()
-                            # Exclude integrated graphics
+                            # Check for dedicated GPUs
                             if any(keyword in gpu_lower for keyword in 
                                   ['nvidia', 'geforce', 'rtx', 'gtx', 'radeon', 'rx ', 'arc']):
                                 if 'intel(r) uhd' not in gpu_lower and 'intel(r) hd' not in gpu_lower:
-                                    print(f"Selected DirectML GPU device {idx}: {gpu}")
+                                    print(f"Selected dedicated DirectML GPU device {idx}: {gpu}")
                                     return idx
                         
-                        # If no dedicated GPU found, use first available device
-                        print(f"No dedicated GPU detected, using first device: {gpus[0]}")
+                        # Second pass: If no dedicated GPU found, look for integrated GPU
+                        for idx, gpu in enumerate(gpus):
+                            gpu_lower = gpu.lower()
+                            # Check for integrated GPUs (Intel UHD/HD, AMD integrated, etc.)
+                            if any(keyword in gpu_lower for keyword in 
+                                  ['intel', 'amd', 'radeon', 'graphics']):
+                                print(f"Selected integrated DirectML GPU device {idx}: {gpu}")
+                                return idx
+                        
+                        # If no recognizable GPU found, use first available device
+                        print(f"No recognized GPU detected, using first device: {gpus[0]}")
                         return 0
             except Exception as e:
                 print(f"Warning: GPU enumeration failed, using default device 0: {e}")

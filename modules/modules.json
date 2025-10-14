@@ -2,7 +2,7 @@
     {
     "ModuleId": "ALPRYOLO11",
     "Name": "License Plate Reader (YOLO11-ONNX)",
-    "Version": "1.0.1",
+    "Version": "1.0.2",
     "PublishingInfo": {
       "Description": "Detects and readers single-line and multi-line license plates using YOLO11 models and the ONNX Runtime",
       "IconURL": "",
@@ -27,8 +27,8 @@
             ""
           ],
           "ReleaseDate": "2025-10-05",
-          "ReleaseNotes": null,
-          "Importance": null
+          "ReleaseNotes": "Initial Release",
+          "Importance": "Major"
         },
         {
           "ModuleVersion": "1.0.1",
@@ -36,9 +36,19 @@
             "2.9.4",
             ""
           ],
-          "ReleaseDate": "2025-10-14",
+          "ReleaseDate": "2025-10-13",
           "ReleaseNotes": "Added Smart Device Selection",
-          "Importance": null
+          "Importance": "Minor"
+        },
+        {
+          "ModuleVersion": "1.0.2",
+          "ServerVersionRange": [
+            "2.9.4",
+            ""
+          ],
+          "ReleaseDate": "2025-10-14",
+          "ReleaseNotes": "Fixed Smart Device Selection.",
+          "Importance": "Minor"
         }
       ]
     },

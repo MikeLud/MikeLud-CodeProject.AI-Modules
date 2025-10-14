@@ -2,7 +2,7 @@
   "Modules": {
     "ALPRYOLO11": {
       "Name": "License Plate Recognition (YOLO11)",
-      "Version": "1.0.1",
+      "Version": "1.0.2",
       "PublishingInfo" : {
         "Description" : "Provides Automatic License Plate Recognition (ALPR) using YOLO11 models",
         "Category"    : "Computer Vision",
@@ -37,7 +37,7 @@
         "PLATE_ASPECT_RATIO"        : "2.5",
         "CORNER_DILATION_PIXELS"    : "5",
         "CHAR_BOX_DILATION_WIDTH"   : "0",
-        "CHAR_BOX_DILATION_HEIGHT"  : "3",
+        "CHAR_BOX_DILATION_HEIGHT"  : "0",
         "USE_ONNX"                  : "True",
         "USE_CUDA"                  : "False",
         "USE_DIRECTML"              : "True",
@@ -55,7 +55,8 @@
         "Platforms":      [ "windows" ],
         "ModuleReleases": [
           { "ModuleVersion": "1.0.0", "ServerVersionRange": [ "2.9.4", "" ], "ReleaseDate": "2025-02-28", "ReleaseNotes": "Initial Release", "Importance": "Major" },
-          { "ModuleVersion": "1.0.1", "ServerVersionRange": [ "2.9.4", "" ], "ReleaseDate": "2025-10-14", "ReleaseNotes": "Added Smart Device Selection.", "Importance": "Minor" }
+          { "ModuleVersion": "1.0.1", "ServerVersionRange": [ "2.9.4", "" ], "ReleaseDate": "2025-10-13", "ReleaseNotes": "Added Smart Device Selection.", "Importance": "Minor" },
+          { "ModuleVersion": "1.0.2", "ServerVersionRange": [ "2.9.4", "" ], "ReleaseDate": "2026-10-14", "ReleaseNotes": "Fixed Smart Device Selection.", "Importance": "Minor" }
         ]
       },
       "ModelRequirements" : [{
