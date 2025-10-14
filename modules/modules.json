@@ -29,6 +29,16 @@
           "ReleaseDate": "2025-10-05",
           "ReleaseNotes": null,
           "Importance": null
+        },
+        {
+          "ModuleVersion": "1.0.1",
+          "ServerVersionRange": [
+            "2.9.4",
+            ""
+          ],
+          "ReleaseDate": "2025-10-14",
+          "ReleaseNotes": "Added Smart Device Selection",
+          "Importance": null
         }
       ]
     },

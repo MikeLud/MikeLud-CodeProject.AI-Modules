@@ -5,6 +5,7 @@ Manages separate InferenceSession instances for each model with proper resource 
 import os
 import threading
 import weakref
+import platform
 from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 
@@ -13,6 +14,65 @@ try:
     ONNX_AVAILABLE = True
 except ImportError:
     ONNX_AVAILABLE = False
+
+
+def _detect_directml_compatible_gpu() -> Optional[int]:
+    """
+    Detect DirectML-compatible GPU and return the device ID.
+    
+    Returns:
+        Device ID of compatible GPU, or None if no compatible GPU found
+    """
+    if platform.system() != 'Windows':
+        return None
+    
+    try:
+        # Try using onnxruntime to query DirectML devices
+        if ONNX_AVAILABLE and 'DmlExecutionProvider' in ort.get_available_providers():
+            # DirectML is available, try to enumerate devices
+            try:
+                import subprocess
+                import re
+                
+                # Use wmic to get GPU information on Windows
+                result = subprocess.run(
+                    ['wmic', 'path', 'win32_VideoController', 'get', 'name'],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                
+                if result.returncode == 0:
+                    gpus = [line.strip() for line in result.stdout.split('\n') 
+                           if line.strip() and line.strip() != 'Name']
+                    
+                    if gpus:
+                        print(f"Detected GPUs: {gpus}")
+                        
+                        # Prioritize dedicated GPUs over integrated
+                        # Look for NVIDIA, AMD, or Intel Arc (discrete GPUs)
+                        for idx, gpu in enumerate(gpus):
+                            gpu_lower = gpu.lower()
+                            # Exclude integrated graphics
+                            if any(keyword in gpu_lower for keyword in 
+                                  ['nvidia', 'geforce', 'rtx', 'gtx', 'radeon', 'rx ', 'arc']):
+                                if 'intel(r) uhd' not in gpu_lower and 'intel(r) hd' not in gpu_lower:
+                                    print(f"Selected DirectML GPU device {idx}: {gpu}")
+                                    return idx
+                        
+                        # If no dedicated GPU found, use first available device
+                        print(f"No dedicated GPU detected, using first device: {gpus[0]}")
+                        return 0
+            except Exception as e:
+                print(f"Warning: GPU enumeration failed, using default device 0: {e}")
+                return 0
+            
+            # DirectML is available but couldn't enumerate, use device 0
+            return 0
+    except Exception as e:
+        print(f"Warning: DirectML GPU detection failed: {e}")
+    
+    return None
 
 
 @dataclass
@@ -54,7 +114,14 @@ class ONNXSessionManager:
         # Keep track of available providers
         self._available_providers = ort.get_available_providers()
         
-        print(f"ONNX Session Manager initialized. Available providers: {self._available_providers}")
+        # Detect compatible DirectML GPU device
+        self._directml_device_id = _detect_directml_compatible_gpu()
+        if self._directml_device_id is not None:
+            print(f"ONNX Session Manager initialized. Available providers: {self._available_providers}")
+            print(f"DirectML GPU device ID: {self._directml_device_id}")
+        else:
+            print(f"ONNX Session Manager initialized. Available providers: {self._available_providers}")
+            print("No DirectML-compatible GPU detected, will use CPU")
     
     def create_session(self, config: SessionConfig) -> str:
         """
@@ -123,22 +190,26 @@ class ONNXSessionManager:
             
             # Check for DirectML provider first (Windows GPU acceleration)
             if config.use_directml:
-                if 'DmlExecutionProvider' in self._available_providers:
-                    providers.append(('DmlExecutionProvider', {"device_id": 0}))
-                    print(f"Using DirectML GPU acceleration for {config.model_path} with device_id: 0")
-                    gpu_provider_added = True
-                elif 'DirectMLExecutionProvider' in self._available_providers:
-                    # Some versions use this provider name
-                    providers.append(('DirectMLExecutionProvider', {"device_id": 0}))
-                    print(f"Using DirectML GPU acceleration for {config.model_path} with device_id: 0")
-                    gpu_provider_added = True
+                if self._directml_device_id is not None:
+                    if 'DmlExecutionProvider' in self._available_providers:
+                        providers.append(('DmlExecutionProvider', {"device_id": self._directml_device_id}))
+                        print(f"Using DirectML GPU acceleration for {config.model_path} with device_id: {self._directml_device_id}")
+                        gpu_provider_added = True
+                    elif 'DirectMLExecutionProvider' in self._available_providers:
+                        # Some versions use this provider name
+                        providers.append(('DirectMLExecutionProvider', {"device_id": self._directml_device_id}))
+                        print(f"Using DirectML GPU acceleration for {config.model_path} with device_id: {self._directml_device_id}")
+                        gpu_provider_added = True
+                    else:
+                        print(f"DirectML requested but not available. Available providers: {self._available_providers}")
                 else:
-                    print(f"DirectML requested but not available. Available providers: {self._available_providers}")
+                    print(f"DirectML requested but no compatible GPU detected. Available providers: {self._available_providers}")
             
             # Add CUDA provider if requested and available (Linux/CUDA systems)
             if config.use_cuda and 'CUDAExecutionProvider' in self._available_providers and not gpu_provider_added:
-                providers.append(('CUDAExecutionProvider', {"device_id": 0}))
-                print(f"Using CUDA GPU acceleration for {config.model_path} with device_id: 0")
+                cuda_device_id = 0  # Default to first CUDA device
+                providers.append(('CUDAExecutionProvider', {"device_id": cuda_device_id}))
+                print(f"Using CUDA GPU acceleration for {config.model_path} with device_id: {cuda_device_id}")
                 gpu_provider_added = True
             
             # Always add CPU provider as fallback
