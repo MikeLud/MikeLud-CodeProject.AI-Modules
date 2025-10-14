@@ -2,7 +2,7 @@
   "Modules": {
     "ALPRYOLO11": {
       "Name": "License Plate Recognition (YOLO11)",
-      "Version": "1.0.0",
+      "Version": "1.0.1",
       "PublishingInfo" : {
         "Description" : "Provides Automatic License Plate Recognition (ALPR) using YOLO11 models",
         "Category"    : "Computer Vision",
@@ -54,7 +54,8 @@
       "InstallOptions" : {
         "Platforms":      [ "windows" ],
         "ModuleReleases": [
-          { "ModuleVersion": "1.0.0", "ServerVersionRange": [ "2.9.4", "" ], "ReleaseDate": "2025-02-28", "ReleaseNotes": "Initial Release", "Importance": "Major" }
+          { "ModuleVersion": "1.0.0", "ServerVersionRange": [ "2.9.4", "" ], "ReleaseDate": "2025-02-28", "ReleaseNotes": "Initial Release", "Importance": "Major" },
+          { "ModuleVersion": "1.0.1", "ServerVersionRange": [ "2.9.4", "" ], "ReleaseDate": "2025-10-14", "ReleaseNotes": "Added Smart Device Selection.", "Importance": "Minor" }
         ]
       },
       "ModelRequirements" : [{
