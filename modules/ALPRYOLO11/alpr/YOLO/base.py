@@ -20,7 +20,7 @@ class YOLOBase:
     Uses a centralized session manager for ONNX inference sessions.
     """
 
-    def __init__(self, model_path: str, task: str, use_onnx: bool = True, use_cuda: bool = True):
+    def __init__(self, model_path: str, task: str, use_onnx: bool = True, use_cuda: bool = True, device_id: Optional[int] = None):
         """
         Initialize a YOLO model using ONNX runtime.
 
@@ -29,6 +29,7 @@ class YOLOBase:
             task: Task type ('detect', 'classify', 'pose')
             use_onnx: Deprecated parameter, always True (kept for compatibility)
             use_cuda: Whether to use GPU acceleration (DirectML on Windows, CPU fallback otherwise)
+            device_id: Optional GPU device ID to use (None for auto-detect)
         """
         self.model_path = model_path
         self.task = task
@@ -47,25 +48,26 @@ class YOLOBase:
             raise FileNotFoundError(f"Model file not found: {model_path}")
 
         # Initialize ONNX model
-        self._init_onnx_model(use_cuda)
+        self._init_onnx_model(use_cuda, device_id)
 
         # Load class names
         self._load_class_names()
 
-    def _init_onnx_model(self, use_cuda: bool):
+    def _init_onnx_model(self, use_cuda: bool, device_id: Optional[int] = None):
         """Initialize ONNX runtime session using the centralized session manager"""
         if not SM_ONNX_AVAILABLE:
             raise ImportError("ONNX Runtime is not available. Please install it with 'pip install onnxruntime' or 'pip install onnxruntime-directml'")
 
         try:
-            # Get the global session manager
-            self.session_manager = get_session_manager()
+            # Get the global session manager with device_id for validation
+            self.session_manager = get_session_manager(device_id)
             
             # Create session configuration
             session_config = SessionConfig(
                 model_path=self.model_path,
                 use_cuda=use_cuda,
-                use_directml=True  # Enable DirectML support
+                use_directml=True,  # Enable DirectML support
+                device_id=device_id  # Pass device_id to session config
             )
             
             # Create session through the manager

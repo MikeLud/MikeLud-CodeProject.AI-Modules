@@ -47,7 +47,8 @@ class StateClassifier(YOLOBase):
                 model_path=self.model_path,
                 task='classify',
                 use_onnx=True,
-                use_cuda=config.use_cuda
+                use_cuda=config.use_cuda,
+                device_id=config.device_id
             )
         except Exception as e:
             raise ModelLoadingError(self.model_path, e)

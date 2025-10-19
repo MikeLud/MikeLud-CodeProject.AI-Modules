@@ -53,7 +53,8 @@ class VehicleDetector:
                 use_cuda=config.use_cuda,
                 confidence=self.vehicle_detector_confidence,
                 save_debug_images=self.save_debug_images,
-                debug_images_dir=self.debug_images_dir
+                debug_images_dir=self.debug_images_dir,
+                device_id=config.device_id
             )
         except Exception as e:
             raise ModelLoadingError(self.vehicle_detector_path, e)
@@ -67,7 +68,8 @@ class VehicleDetector:
                 resolution=self.vehicle_classifier_resolution,
                 confidence=self.vehicle_classifier_confidence,
                 save_debug_images=self.save_debug_images,
-                debug_images_dir=self.debug_images_dir
+                debug_images_dir=self.debug_images_dir,
+                device_id=config.device_id
             )
         except Exception as e:
             raise ModelLoadingError(self.vehicle_classifier_path, e)
@@ -199,7 +201,8 @@ class VehicleDetectorYOLO(YOLOBase):
     """Vehicle detector using YOLOv8."""
     
     def __init__(self, model_path: str, task: str, use_onnx: bool, use_cuda: bool, 
-                 confidence: float, save_debug_images: bool = False, debug_images_dir: str = None):
+                 confidence: float, save_debug_images: bool = False, debug_images_dir: str = None,
+                 device_id: int = None):
         """
         Initialize the vehicle detector.
         
@@ -211,8 +214,9 @@ class VehicleDetectorYOLO(YOLOBase):
             confidence: Confidence threshold
             save_debug_images: Whether to save debug images
             debug_images_dir: Directory for debug images
+            device_id: GPU device ID (None for auto-detect)
         """
-        super().__init__(model_path, task, use_onnx, use_cuda)
+        super().__init__(model_path, task, use_onnx, use_cuda, device_id)
         self.confidence_threshold = confidence
         self.save_debug_images = save_debug_images
         self.debug_images_dir = debug_images_dir
@@ -350,7 +354,8 @@ class VehicleClassifierYOLO(YOLOBase):
     
     def __init__(self, model_path: str, task: str, use_onnx: bool, use_cuda: bool, 
                  resolution: Tuple[int, int], confidence: float,
-                 save_debug_images: bool = False, debug_images_dir: str = None):
+                 save_debug_images: bool = False, debug_images_dir: str = None,
+                 device_id: int = None):
         """
         Initialize the vehicle classifier.
         
@@ -363,8 +368,9 @@ class VehicleClassifierYOLO(YOLOBase):
             confidence: Confidence threshold
             save_debug_images: Whether to save debug images
             debug_images_dir: Directory for debug images
+            device_id: GPU device ID (None for auto-detect)
         """
-        super().__init__(model_path, task, use_onnx, use_cuda)
+        super().__init__(model_path, task, use_onnx, use_cuda, device_id)
         # Keep resolution for ONNX preprocessing or if specific size is needed for classification
         self.resolution = resolution
         self.confidence_threshold = confidence

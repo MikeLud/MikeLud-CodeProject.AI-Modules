@@ -1,6 +1,6 @@
 # Automatic License Plate Recognition (ALPR) Module for CodeProject.AI Server
 
-This is an Automatic License Plate Recognition (ALPR) module for [CodeProject.AI Server](https://www.codeproject.com/Articles/5322557/CodeProject-AI-Server-AI-the-easy-way). The module can detect license plates in images, recognize characters, identify states, and detect vehicles with make/model classifications.
+This is an Automatic License Plate Recognition (ALPR) module for [CodeProject.AI Server](https://www.codeproject.com/Articles/5322557/CodeProject-AI-Server-AI-the-easy-way). The module can detect license plates in images, recognize characters, identify states, detect vehicles with make/model classifications, and calculate vehicle speed.
 
 ## Features
 
@@ -8,6 +8,7 @@ This is an Automatic License Plate Recognition (ALPR) module for [CodeProject.AI
 - Character recognition on license plates with **stable, deterministic ordering**
 - State classification for license plates (when enabled)
 - Vehicle detection and make/model classification (when enabled)
+- **Vehicle speed calculation using license plate dimensions as reference** (when enabled)
 - Support for GPU acceleration via DirectML (Windows) or MPS (Apple Silicon)
 - Configurable confidence thresholds and plate aspect ratios
 - ONNX model format for optimized inference performance
@@ -51,8 +52,17 @@ The module supports several configuration options through environment variables:
 
 - `ENABLE_STATE_DETECTION`: Enable/disable state identification (default: true)
 - `ENABLE_VEHICLE_DETECTION`: Enable/disable vehicle detection (default: true)
+- `ENABLE_SPEED_CALCULATION`: Enable/disable vehicle speed calculation (default: false)
 - `PLATE_ASPECT_RATIO`: Set a specific aspect ratio for license plates (default: 4.0)
 - `CORNER_DILATION_PIXELS`: Configure corner dilation for license plate extraction (default: 5)
+
+### Speed Calculation Settings
+
+- `FRAME_RATE`: Camera frame rate in frames per second (default: 20.0)
+- `PLATE_WIDTH_INCHES`: Real-world license plate width in inches (default: 12.0 for US plates)
+- `PLATE_HEIGHT_INCHES`: Real-world license plate height in inches (default: 6.0 for US plates)
+- `SPEED_TRACKING_WINDOW_FRAMES`: Rolling window size in frames for tracking (default: 20)
+- `SPEED_MIN_TRACKING_FRAMES`: Minimum frames needed before calculating speed (default: 3)
 
 ### Model Configuration
 
@@ -90,18 +100,18 @@ This module implements **deterministic character ordering** to ensure 100% consi
 
 ### Key Benefits
 
-✅ **Deterministic Results**: Same plate image always produces identical character order  
-✅ **Floating-Point Safe**: Handles characters with nearly identical coordinates reliably  
-✅ **Edge Case Handling**: Special logic for 2-character plates, multi-line plates, vertical characters  
-✅ **Robust Sorting**: Original index used as final tiebreaker in all sorting operations  
+✅ **Correct Spatial Ordering**: Characters sorted purely by position (X, Y coordinates)  
+✅ **Detection-Order Independent**: Unaffected by YOLO model's arbitrary output order  
+✅ **Edge Case Handling**: Special logic for multi-line plates, vertical characters, mixed layouts  
+✅ **Coordinate-Based Sorting**: Trusts bounding box positions, not detection sequence  
 
 ### Supported Plate Layouts
 
-- **Single-line horizontal** (e.g., "ABC1234"): Left-to-right ordering
-- **Multi-line plates** (e.g., "ABC" over "1234"): Top-to-bottom, then left-to-right per line
-- **Vertical characters** (e.g., "ABC123MD" with vertical "MD"): Proper vertical section ordering
+- **Single-line horizontal** (e.g., "ABC1234"): Strict left-to-right by X coordinate
+- **Multi-line plates** (e.g., "ABC" over "1234"): Top-to-bottom by Y, then left-to-right per line
+- **Vertical characters** (e.g., "ABC123MD" with vertical "MD"): Top-to-bottom by Y coordinate
 - **Mixed layouts**: Automatic detection and handling of horizontal/vertical combinations
-- **Overlapping characters**: Grouping and ordering based on spatial proximity
+- **Overlapping characters**: Grouping by X proximity, ordering by Y coordinate
 
 ### Debug Features
 
@@ -137,6 +147,69 @@ When enabled, debug images are saved with descriptive names:
 - `final_*`: Complete annotated results
 
 **Note**: Debug images can consume significant disk space. Use only for development and debugging.
+
+## Vehicle Speed Calculation
+
+This module includes an innovative vehicle speed calculation feature that uses the known dimensions of a license plate (12" x 6" for US standard plates) as a reference to estimate vehicle speed.
+
+### How It Works
+
+1. **Plate Tracking**: The system tracks license plates across consecutive frames using IoU (Intersection over Union) matching
+2. **Distance Estimation**: Uses the plate's pixel width compared to its known real-world width (12 inches) to calculate the camera-to-vehicle distance
+3. **Position Tracking**: Monitors the plate's centroid position changes between frames
+4. **Speed Calculation**: Converts pixel movement to real-world distance and calculates speed in MPH using the frame rate
+
+### Configuration
+
+To enable speed calculation:
+
+```bash
+ENABLE_SPEED_CALCULATION=true
+FRAME_RATE=20.0  # Your camera's frame rate
+PLATE_WIDTH_INCHES=12.0  # Standard US plate width
+PLATE_HEIGHT_INCHES=6.0  # Standard US plate height
+```
+
+### API Response
+
+When speed calculation is enabled, each detected plate in the JSON response includes:
+
+- `speed_mph`: Calculated speed in miles per hour (null if insufficient tracking data)
+- `track_id`: Unique identifier for tracking the plate across frames
+- `tracking_frames`: Number of frames the plate has been tracked
+
+Example response:
+```json
+{
+  "success": true,
+  "predictions": [
+    {
+      "label": "ABC1234",
+      "plate": "ABC1234",
+      "confidence": 0.95,
+      "x_min": 150,
+      "y_min": 200,
+      "x_max": 350,
+      "y_max": 260,
+      "speed_mph": 35.2,
+      "track_id": 1,
+      "tracking_frames": 5
+    }
+  ]
+}
+```
+
+### Accuracy Considerations
+
+Speed calculation accuracy depends on several factors:
+
+- **Camera Angle**: Best results with vehicles moving toward or away from camera; less accurate for perpendicular motion
+- **Frame Rate**: Higher frame rates (20+ FPS) provide more accurate measurements
+- **Plate Visibility**: Requires clear plate visibility across multiple consecutive frames
+- **Distance**: Most accurate at moderate distances (20-100 feet)
+- **Calibration**: Uses standard US license plate dimensions (12" × 6")
+
+For non-US plates, adjust `PLATE_WIDTH_INCHES` and `PLATE_HEIGHT_INCHES` to match your region's standard plate dimensions.
 
 ## ONNX Runtime
 
@@ -239,12 +312,14 @@ Enable debug mode for detailed troubleshooting:
 
 ## Recent Improvements
 
-### Character Ordering Stability (v2.0)
+### Character Ordering Stability (v2.1)
 
-**Problem Solved**: Rare (1 in 100) character ordering failures due to floating-point precision in sorting.
+**Problem Solved**: Character ordering failures (e.g., "GJD7213" read as "JDG2371") due to using YOLO detection order instead of spatial coordinates.
 
-**Solution**: Implemented stable multi-key sorting with original index as final tiebreaker. All character ordering operations now use deterministic 3-level sort keys: `(primary_coordinate, secondary_coordinate, original_index)`.
+**Root Cause**: YOLO models output detections in arbitrary order (not left-to-right). The previous fix incorrectly used detection order (`original_index`) as a tiebreaker in sorting, which preserved the random detection sequence instead of sorting by spatial position.
 
-**Impact**: 100% consistent character ordering across all plate types and layouts.
+**Solution**: Removed detection order from all spatial sorts. Characters now sorted purely by bounding box coordinates (X, Y). Detection order is meaningless spatially and must never influence character arrangement.
 
-See [CHARACTER_ORDERING_FIX.md](CHARACTER_ORDERING_FIX.md) for complete technical documentation.
+**Impact**: 100% correct spatial ordering. Characters arranged strictly by their position in the image, regardless of YOLO detection sequence.
+
+See [CHARACTER_ORDERING_FIX.md](history/CHARACTER_ORDERING_FIX.md) for complete technical documentation.

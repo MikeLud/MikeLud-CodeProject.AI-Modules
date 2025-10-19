@@ -16,15 +16,59 @@ except ImportError:
     ONNX_AVAILABLE = False
 
 
-def _detect_directml_compatible_gpu() -> Optional[int]:
+def _detect_directml_compatible_gpu(device_id: Optional[int] = None) -> Optional[int]:
     """
     Detect DirectML-compatible GPU and return the device ID.
+    
+    Args:
+        device_id: Optional specific device ID to use. If None, auto-detect.
     
     Returns:
         Device ID of compatible GPU, or None if no compatible GPU found
     """
-    if platform.system() != 'Windows':
+    if platform.system().lower() != 'windows':
         return None
+    
+    # If user specified a device ID, validate it exists before using it
+    if device_id is not None:
+        if device_id < 0:
+            print(f"Warning: Invalid device_id {device_id} (must be >= 0), falling back to auto-detection")
+            device_id = None  # Fall through to auto-detection
+        else:
+            # Validate the device exists by checking available GPUs
+            try:
+                import subprocess
+                result = subprocess.run(
+                    ['wmic', 'path', 'win32_VideoController', 'get', 'name'],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                
+                if result.returncode == 0:
+                    gpus = [line.strip() for line in result.stdout.split('\n') 
+                           if line.strip() and line.strip() != 'Name']
+                    
+                    # Filter out remote and virtual video controllers
+                    gpus = [gpu for gpu in gpus if not any(keyword in gpu.lower() 
+                           for keyword in ['remote', 'virtual', 'vnc', 'parsec', 'teamviewer', 
+                                         'remotefx', 'hyper-v', 'vmware', 'virtualbox'])]
+                    
+                    if device_id < len(gpus):
+                        print(f"Using user-specified DirectML GPU device ID {device_id}: {gpus[device_id]}")
+                        return device_id
+                    else:
+                        print(f"Warning: Specified device_id {device_id} does not exist (only {len(gpus)} GPU(s) available), falling back to auto-detection")
+                        if gpus:
+                            print(f"Available GPUs: {gpus}")
+                        device_id = None  # Fall through to auto-detection
+            except Exception as e:
+                print(f"Warning: Could not validate device_id {device_id}: {e}, falling back to auto-detection")
+                device_id = None  # Fall through to auto-detection
+    
+    # Only run auto-detection if no valid manual device_id was specified
+    if device_id is not None:
+        return device_id
     
     try:
         # Try using onnxruntime to query DirectML devices
@@ -45,6 +89,11 @@ def _detect_directml_compatible_gpu() -> Optional[int]:
                 if result.returncode == 0:
                     gpus = [line.strip() for line in result.stdout.split('\n') 
                            if line.strip() and line.strip() != 'Name']
+                    
+                    # Filter out remote and virtual video controllers
+                    gpus = [gpu for gpu in gpus if not any(keyword in gpu.lower() 
+                           for keyword in ['remote', 'virtual', 'vnc', 'parsec', 'teamviewer', 
+                                         'remotefx', 'hyper-v', 'vmware', 'virtualbox'])]
                     
                     if gpus:
                         print(f"Detected GPUs: {gpus}")
@@ -90,6 +139,7 @@ class SessionConfig:
     model_path: str
     use_cuda: bool = False
     use_directml: bool = True
+    device_id: Optional[int] = None  # Specific device ID, or None for auto-detect
     session_options: Optional[ort.SessionOptions] = None
     providers: Optional[List[str]] = None
 
@@ -100,8 +150,12 @@ class ONNXSessionManager:
     Provides session isolation, resource management, and DirectML fallback capabilities.
     """
     
-    def __init__(self):
-        """Initialize the session manager."""
+    def __init__(self, default_device_id: Optional[int] = None):
+        """Initialize the session manager.
+        
+        Args:
+            default_device_id: Optional default device ID for all sessions. If None, auto-detect.
+        """
         if not ONNX_AVAILABLE:
             raise ImportError("ONNX Runtime is not available. Please install it with 'pip install onnxruntime' or 'pip install onnxruntime-directml'")
         
@@ -123,13 +177,25 @@ class ONNXSessionManager:
         # Keep track of available providers
         self._available_providers = ort.get_available_providers()
         
+        # Store whether user manually specified a device (for logging purposes)
+        self._user_specified_device = default_device_id is not None
+        
+        # Store default device ID for sessions that don't specify one
+        self._default_device_id = default_device_id
+        
         # Detect compatible DirectML GPU device
-        self._directml_device_id = _detect_directml_compatible_gpu()
+        self._directml_device_id = _detect_directml_compatible_gpu(default_device_id)
+        
+        print(f"ONNX Session Manager initialized. Available providers: {self._available_providers}")
         if self._directml_device_id is not None:
-            print(f"ONNX Session Manager initialized. Available providers: {self._available_providers}")
-            print(f"DirectML GPU device ID: {self._directml_device_id}")
+            if self._user_specified_device:
+                if default_device_id == self._directml_device_id:
+                    print(f"Using manually specified DirectML GPU device ID: {self._directml_device_id}")
+                else:
+                    print(f"Manually specified device ID {default_device_id} was invalid, using validated device ID: {self._directml_device_id}")
+            else:
+                print(f"Auto-detected DirectML GPU device ID: {self._directml_device_id}")
         else:
-            print(f"ONNX Session Manager initialized. Available providers: {self._available_providers}")
             print("No DirectML-compatible GPU detected, will use CPU")
     
     def create_session(self, config: SessionConfig) -> str:
@@ -199,15 +265,18 @@ class ONNXSessionManager:
             
             # Check for DirectML provider first (Windows GPU acceleration)
             if config.use_directml:
-                if self._directml_device_id is not None:
+                # Determine which device ID to use: config > default > auto-detected
+                device_id = config.device_id if config.device_id is not None else self._directml_device_id
+                
+                if device_id is not None:
                     if 'DmlExecutionProvider' in self._available_providers:
-                        providers.append(('DmlExecutionProvider', {"device_id": self._directml_device_id}))
-                        print(f"Using DirectML GPU acceleration for {config.model_path} with device_id: {self._directml_device_id}")
+                        providers.append(('DmlExecutionProvider', {"device_id": device_id}))
+                        print(f"Using DirectML GPU acceleration for {config.model_path} with device_id: {device_id}")
                         gpu_provider_added = True
                     elif 'DirectMLExecutionProvider' in self._available_providers:
                         # Some versions use this provider name
-                        providers.append(('DirectMLExecutionProvider', {"device_id": self._directml_device_id}))
-                        print(f"Using DirectML GPU acceleration for {config.model_path} with device_id: {self._directml_device_id}")
+                        providers.append(('DirectMLExecutionProvider', {"device_id": device_id}))
+                        print(f"Using DirectML GPU acceleration for {config.model_path} with device_id: {device_id}")
                         gpu_provider_added = True
                     else:
                         print(f"DirectML requested but not available. Available providers: {self._available_providers}")
@@ -216,7 +285,8 @@ class ONNXSessionManager:
             
             # Add CUDA provider if requested and available (Linux/CUDA systems)
             if config.use_cuda and 'CUDAExecutionProvider' in self._available_providers and not gpu_provider_added:
-                cuda_device_id = 0  # Default to first CUDA device
+                # Use config device_id or default to 0
+                cuda_device_id = config.device_id if config.device_id is not None else 0
                 providers.append(('CUDAExecutionProvider', {"device_id": cuda_device_id}))
                 print(f"Using CUDA GPU acceleration for {config.model_path} with device_id: {cuda_device_id}")
                 gpu_provider_added = True
@@ -413,6 +483,26 @@ class ONNXSessionManager:
             }
         return info
     
+    def is_using_cpu_only(self) -> bool:
+        """
+        Check if all sessions are using CPU only (no GPU acceleration).
+        
+        Returns:
+            True if all sessions are CPU-only, False otherwise
+        """
+        if not self._sessions:
+            # No sessions created yet, check if GPU is available
+            return self._directml_device_id is None and 'CUDAExecutionProvider' not in self._available_providers
+        
+        # Check if any session is using GPU
+        for session_id in self._sessions:
+            providers = self._sessions[session_id].get_providers()
+            # Check if any GPU provider is active (not just listed)
+            if providers and providers[0] != 'CPUExecutionProvider':
+                return False
+        
+        return True
+    
     def __del__(self):
         """Cleanup when the session manager is destroyed."""
         try:
@@ -426,9 +516,12 @@ _session_manager: Optional[ONNXSessionManager] = None
 _manager_lock = threading.Lock()
 
 
-def get_session_manager() -> ONNXSessionManager:
+def get_session_manager(default_device_id: Optional[int] = None) -> ONNXSessionManager:
     """
     Get the global ONNX session manager instance (singleton pattern).
+    
+    Args:
+        default_device_id: Optional default device ID. Only used when creating new manager.
     
     Returns:
         ONNXSessionManager instance
@@ -438,7 +531,7 @@ def get_session_manager() -> ONNXSessionManager:
     if _session_manager is None:
         with _manager_lock:
             if _session_manager is None:
-                _session_manager = ONNXSessionManager()
+                _session_manager = ONNXSessionManager(default_device_id)
     
     return _session_manager
 

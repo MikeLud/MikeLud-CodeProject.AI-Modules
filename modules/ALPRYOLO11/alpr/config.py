@@ -17,6 +17,16 @@ class ALPRConfig:
     # Feature flags
     enable_state_detection: bool = False
     enable_vehicle_detection: bool = False
+    enable_speed_calculation: bool = True
+    
+    # Speed calculation parameters
+    frame_rate: float = 20.0  # Camera frame rate in FPS
+    plate_width_inches: float = 12.0  # US standard license plate width
+    plate_height_inches: float = 6.0  # US standard license plate height
+    speed_tracking_window_frames: int = 20  # Rolling window size in frames
+    speed_min_tracking_frames: int = 2  # Minimum frames before calculating speed
+    speed_iou_threshold: float = 0.15  # IoU threshold for matching plates (lowered for moving vehicles)
+    speed_centroid_threshold: float = 5.0  # Max normalized centroid distance for matching (5× plate width)
     
     # Confidence thresholds
     plate_detector_confidence: float = 0.45
@@ -49,6 +59,7 @@ class ALPRConfig:
     use_cuda: bool = False
     use_mps: bool = False  # Apple Silicon GPU
     use_directml: bool = True  # DirectML for Windows
+    device_id: Optional[int] = None  # GPU device ID (None = auto-detect)
     
     # Model format (always ONNX)
     onnx_models_dir: str = field(default_factory=lambda: os.path.normpath(os.path.join(os.getcwd(), "models")))
@@ -127,6 +138,10 @@ class ALPRConfig:
         if not 1.0 <= self.clustering_y_scale_factor <= 10.0:
             raise ValueError(f"Clustering Y scale factor must be between 1.0 and 10.0, got {self.clustering_y_scale_factor}")
         
+        # Validate device_id if specified
+        if self.device_id is not None and self.device_id < 0:
+            raise ValueError(f"Device ID must be non-negative, got {self.device_id}")
+        
         # Validate that required model files exist
         required_models = ["plate_detector", "char_detector", "char_classifier", "state_classifier"]
         for model_name in required_models:
@@ -163,6 +178,7 @@ class ALPRConfig:
             "features": {
                 "enable_state_detection": self.enable_state_detection,
                 "enable_vehicle_detection": self.enable_vehicle_detection,
+                "enable_speed_calculation": self.enable_speed_calculation,
                 "save_debug_images": self.save_debug_images,
             },
             "confidence_thresholds": {
@@ -179,6 +195,15 @@ class ALPRConfig:
                 "char_box_dilation_width": self.char_box_dilation_width,
                 "char_box_dilation_height": self.char_box_dilation_height,
             },
+            "speed_calculation": {
+                "frame_rate": self.frame_rate,
+                "plate_width_inches": self.plate_width_inches,
+                "plate_height_inches": self.plate_height_inches,
+                "tracking_window_frames": self.speed_tracking_window_frames,
+                "min_tracking_frames": self.speed_min_tracking_frames,
+                "iou_threshold": self.speed_iou_threshold,
+                "centroid_threshold": self.speed_centroid_threshold,
+            },
             "character_organization": {
                 "line_separation_threshold": self.line_separation_threshold,
                 "vertical_aspect_ratio": self.vertical_aspect_ratio,
@@ -191,6 +216,7 @@ class ALPRConfig:
                 "use_cuda": self.use_cuda,
                 "use_mps": self.use_mps,
                 "use_directml": self.use_directml,
+                "device_id": self.device_id,
             }
         }
         
@@ -208,6 +234,16 @@ def load_from_env() -> ALPRConfig:
     # Feature flags
     enable_state_detection = ModuleOptions.getEnvVariable("ENABLE_STATE_DETECTION", "False").lower() == "true"
     enable_vehicle_detection = ModuleOptions.getEnvVariable("ENABLE_VEHICLE_DETECTION", "False").lower() == "true"
+    enable_speed_calculation = ModuleOptions.getEnvVariable("ENABLE_SPEED_CALCULATION", "True").lower() == "true"
+    
+    # Speed calculation parameters
+    frame_rate = float(ModuleOptions.getEnvVariable("FRAME_RATE", "20.0"))
+    plate_width_inches = float(ModuleOptions.getEnvVariable("PLATE_WIDTH_INCHES", "12.0"))
+    plate_height_inches = float(ModuleOptions.getEnvVariable("PLATE_HEIGHT_INCHES", "6.0"))
+    speed_tracking_window_frames = int(ModuleOptions.getEnvVariable("SPEED_TRACKING_WINDOW_FRAMES", "20"))
+    speed_min_tracking_frames = int(ModuleOptions.getEnvVariable("SPEED_MIN_TRACKING_FRAMES", "3"))
+    speed_iou_threshold = float(ModuleOptions.getEnvVariable("SPEED_IOU_THRESHOLD", "0.15"))
+    speed_centroid_threshold = float(ModuleOptions.getEnvVariable("SPEED_CENTROID_THRESHOLD", "2.0"))
     
     # Confidence thresholds
     plate_detector_confidence = float(ModuleOptions.getEnvVariable("PLATE_DETECTOR_CONFIDENCE", "0.45"))
@@ -241,6 +277,8 @@ def load_from_env() -> ALPRConfig:
     use_cuda = ModuleOptions.getEnvVariable("USE_CUDA", "False").lower() == "true"
     use_mps = False  # Default to false, will be checked for availability later
     use_directml = ModuleOptions.getEnvVariable("USE_DIRECTML", "True").lower() == "true"
+    device_id_str = ModuleOptions.getEnvVariable("DEVICE_ID", "None")
+    device_id = int(device_id_str) if device_id_str and device_id_str.isdigit() else None
     
     # Model format (always ONNX)
     onnx_models_dir = os.path.normpath(ModuleOptions.getEnvVariable("ONNX_MODELS_DIR", f"{app_dir}/models"))
@@ -250,6 +288,14 @@ def load_from_env() -> ALPRConfig:
         models_dir=models_dir,
         enable_state_detection=enable_state_detection,
         enable_vehicle_detection=enable_vehicle_detection,
+        enable_speed_calculation=enable_speed_calculation,
+        frame_rate=frame_rate,
+        plate_width_inches=plate_width_inches,
+        plate_height_inches=plate_height_inches,
+        speed_tracking_window_frames=speed_tracking_window_frames,
+        speed_min_tracking_frames=speed_min_tracking_frames,
+        speed_iou_threshold=speed_iou_threshold,
+        speed_centroid_threshold=speed_centroid_threshold,
         plate_detector_confidence=plate_detector_confidence,
         state_classifier_confidence=state_classifier_confidence,
         char_detector_confidence=char_detector_confidence,
@@ -272,5 +318,6 @@ def load_from_env() -> ALPRConfig:
         use_cuda=use_cuda,
         use_mps=use_mps,
         use_directml=use_directml,
+        device_id=device_id,
         onnx_models_dir=onnx_models_dir
     )

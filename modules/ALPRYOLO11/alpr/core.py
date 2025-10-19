@@ -14,6 +14,7 @@ from .YOLO.character_detector import CharacterDetector
 from .YOLO.state_classifier import StateClassifier
 from .YOLO.vehicle_detector import VehicleDetector
 from .utils.image_processing import four_point_transform, save_debug_image
+from .utils.speed_tracker import VehicleSpeedTracker
 
 
 class ALPRSystem:
@@ -50,6 +51,22 @@ class ALPRSystem:
         self.vehicle_detector = None
         if config.enable_vehicle_detection:
             self.vehicle_detector = VehicleDetector(config)
+        
+        # Initialize speed tracker if enabled
+        self.speed_tracker = None
+        if config.enable_speed_calculation:
+            self.speed_tracker = VehicleSpeedTracker(
+                frame_rate=config.frame_rate,
+                plate_width_inches=config.plate_width_inches,
+                plate_height_inches=config.plate_height_inches,
+                tracking_window_frames=config.speed_tracking_window_frames,
+                min_tracking_frames=config.speed_min_tracking_frames,
+                iou_threshold=config.speed_iou_threshold,
+                centroid_threshold=config.speed_centroid_threshold
+            )
+            print(f"Speed tracking ENABLED: frame_rate={config.frame_rate}, plate_width={config.plate_width_inches}, window={config.speed_tracking_window_frames} frames, iou_threshold={config.speed_iou_threshold}, centroid_threshold={config.speed_centroid_threshold}")
+        else:
+            print(f"Speed tracking DISABLED: enable_speed_calculation={config.enable_speed_calculation}")
             
         # Ensure the parent directory for saving cropped plates exists
         cropped_plate_dir = os.path.dirname(config.cropped_plate_save_path)
@@ -375,8 +392,28 @@ class ALPRSystem:
                     # Add top plate alternatives
                     if "top_plates" in plate:
                         plate_data["top_plates"] = plate["top_plates"]
+                    
+                    # Add corners for perspective-aware speed calculation
+                    if "corners" in plate:
+                        plate_data["corners"] = plate["corners"]
                         
                     plates.append(plate_data)
+        
+        # Apply speed tracking if enabled
+        if self.speed_tracker and plates:
+            # print(f"[DEBUG] Applying speed tracking to {len(plates)} plates")
+            plates = self.speed_tracker.update(plates)
+            # print(f"[DEBUG] After speed tracking, got {len(plates)} plates back")
+            # Print speed for each plate
+            for plate in plates:
+                speed = plate.get("speed_mph")
+                tracking_frames = plate.get("tracking_frames", 0)
+                track_id = plate.get("track_id", "?")
+                # print(f"[DEBUG] Plate {plate['label']}: speed={speed}, tracking_frames={tracking_frames}, track_id={track_id}")
+                if speed is not None:
+                    print(f"Plate {plate['label']}: {speed} mph (tracked {tracking_frames} frames)")
+                else:
+                    print(f"Plate {plate['label']}: calculating speed... ({tracking_frames} frames)")
         
         # Save final result image with all plates if enabled
         if self.config.save_debug_images and plates:

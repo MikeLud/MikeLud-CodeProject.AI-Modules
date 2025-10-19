@@ -49,6 +49,16 @@
           "ReleaseDate": "2025-10-14",
           "ReleaseNotes": "Fixed Smart Device Selection.",
           "Importance": "Minor"
+        },
+        {
+          "ModuleVersion": "1.0.3",
+          "ServerVersionRange": [
+            "2.9.4",
+            ""
+          ],
+          "ReleaseDate": "2025-10-18",
+          "ReleaseNotes": "Fixed Smart Device Selection.",
+          "Importance": "Minor"
         }
       ]
     },

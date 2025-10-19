@@ -2,7 +2,7 @@
   "Modules": {
     "ALPRYOLO11": {
       "Name": "License Plate Recognition (YOLO11)",
-      "Version": "1.0.2",
+      "Version": "1.0.3",
       "PublishingInfo" : {
         "Description" : "Provides Automatic License Plate Recognition (ALPR) using YOLO11 models",
         "Category"    : "Computer Vision",
@@ -28,6 +28,9 @@
         "MODELS_DIR"                : "%CURRENT_MODULE_PATH%/models",
         "ENABLE_STATE_DETECTION"    : "False",
         "ENABLE_VEHICLE_DETECTION"  : "False",
+        "ENABLE_SPEED_DETECTION"    : "True",
+        "SPEED_CENTROID_THRESHOLD"  : "5.0",
+        "SPEED_IOU_THRESHOLD"       : "0.15",
         "PLATE_DETECTOR_CONFIDENCE" : "0.45",
         "STATE_CLASSIFIER_CONFIDENCE": "0.45",
         "CHAR_DETECTOR_CONFIDENCE"  : "0.40",
@@ -41,6 +44,7 @@
         "USE_ONNX"                  : "True",
         "USE_CUDA"                  : "False",
         "USE_DIRECTML"              : "True",
+        "DEVICE_ID"                 : "None",
         "ONNX_MODELS_DIR"           : "%CURRENT_MODULE_PATH%/models",
         "SAVE_DEBUG_IMAGES"         : "False",
         "DEBUG_IMAGES_DIR"          : "%CURRENT_MODULE_PATH%/debug_images"
@@ -56,7 +60,8 @@
         "ModuleReleases": [
           { "ModuleVersion": "1.0.0", "ServerVersionRange": [ "2.9.4", "" ], "ReleaseDate": "2025-02-28", "ReleaseNotes": "Initial Release", "Importance": "Major" },
           { "ModuleVersion": "1.0.1", "ServerVersionRange": [ "2.9.4", "" ], "ReleaseDate": "2025-10-13", "ReleaseNotes": "Added Smart Device Selection.", "Importance": "Minor" },
-          { "ModuleVersion": "1.0.2", "ServerVersionRange": [ "2.9.4", "" ], "ReleaseDate": "2026-10-14", "ReleaseNotes": "Fixed Smart Device Selection.", "Importance": "Minor" }
+          { "ModuleVersion": "1.0.2", "ServerVersionRange": [ "2.9.4", "" ], "ReleaseDate": "2026-10-14", "ReleaseNotes": "Fixed Smart Device Selection.", "Importance": "Minor" },
+          { "ModuleVersion": "1.0.3", "ServerVersionRange": [ "2.9.4", "" ], "ReleaseDate": "2026-10-18", "ReleaseNotes": "Fixed Smart Device Selection.", "Importance": "Minor" }
         ]
       },
       "ModelRequirements" : [{
@@ -77,6 +82,13 @@
           "Options": [
             { "Label": "Enable vehicle detection",  "Setting": "ENABLE_VEHICLE_DETECTION", "Value": "False" },
             { "Label": "Disable vehicle detection", "Setting": "ENABLE_VEHICLE_DETECTION", "Value": "False" }
+          ]
+        },
+        {
+          "Label": "Speed Detection",
+          "Options": [
+            { "Label": "Enable speed detection",  "Setting": "ENABLE_SPEED_DETECTION", "Value": "True" },
+            { "Label": "Disable speed detection", "Setting": "ENABLE_SPEED_DETECTION", "Value": "False" }
           ]
         },
         {
@@ -173,6 +185,16 @@
             { "Label": "Medium (45%)",    "Setting": "VEHICLE_DETECTOR_CONFIDENCE,VEHICLE_CLASSIFIER_CONFIDENCE", "Value": "0.45,0.45" },
             { "Label": "Low (35%)",       "Setting": "VEHICLE_DETECTOR_CONFIDENCE,VEHICLE_CLASSIFIER_CONFIDENCE", "Value": "0.35,0.35" },
             { "Label": "Very Low (25%)",  "Setting": "VEHICLE_DETECTOR_CONFIDENCE,VEHICLE_CLASSIFIER_CONFIDENCE", "Value": "0.25,0.25" }
+          ]
+        },
+        {
+          "Label": "GPU Device Selection",
+          "Options": [
+            { "Label": "Auto-detect (Default)", "Setting": "DEVICE_ID", "Value": "None" },
+            { "Label": "Device 0",              "Setting": "DEVICE_ID", "Value": "0" },
+            { "Label": "Device 1",              "Setting": "DEVICE_ID", "Value": "1" },
+            { "Label": "Device 2",              "Setting": "DEVICE_ID", "Value": "2" },
+            { "Label": "Device 3",              "Setting": "DEVICE_ID", "Value": "3" }
           ]
         }]
       },

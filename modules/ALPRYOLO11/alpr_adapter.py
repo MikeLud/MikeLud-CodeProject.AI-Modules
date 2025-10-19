@@ -132,6 +132,20 @@ class ALPRAdapter(ModuleRunner):
             # Initialize the ALPR system
             self.alpr_system = ALPRSystem(self.config)
             
+            # Check if actually using GPU or fell back to CPU
+            from alpr.YOLO.session_manager import get_session_manager
+            session_manager = get_session_manager()
+            if session_manager.is_using_cpu_only():
+                self.inference_device = "CPU"
+                self.inference_library = "ONNX"
+                self.log(LogMethod.Info | LogMethod.Server,
+                {
+                    "filename": __file__,
+                    "loglevel": "information",
+                    "method": sys._getframe().f_code.co_name,
+                    "message": "Using CPU for inference (GPU not available or failed)"
+                })
+            
             self.log(LogMethod.Info | LogMethod.Server,
             {
                 "filename": __file__,
@@ -193,6 +207,24 @@ class ALPRAdapter(ModuleRunner):
         try:
             # Use the ALPR system to detect license plates
             result = self.alpr_system.detect_license_plate(img, threshold)
+            
+            # Log speed information for detected plates
+            for plate in result.get("predictions", []):
+                if "speed_mph" in plate:
+                    speed = plate["speed_mph"]
+                    tracking_frames = plate.get("tracking_frames", 0)
+                    if speed is not None:
+                        self.log(LogMethod.Info | LogMethod.Server,
+                                {
+                                    "message": f"Plate {plate['label']}: {speed} mph (tracked {tracking_frames} frames)",
+                                    "loglevel": "information"
+                                })
+                    else:
+                        self.log(LogMethod.Info | LogMethod.Server,
+                                {
+                                    "message": f"Plate {plate['label']}: calculating speed... ({tracking_frames} frames)",
+                                    "loglevel": "information"
+                                })
             
             # Update statistics
             self._plates_detected += len(result.get("predictions", []))

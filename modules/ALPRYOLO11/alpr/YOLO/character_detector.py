@@ -24,7 +24,7 @@ class CharDetector(YOLOBase):
     
     def __init__(self, model_path: str, task: str, use_onnx: bool, use_cuda: bool, 
                  confidence: float, save_debug_images: bool = False, debug_images_dir: str = None,
-                 dilation_width: int = 0, dilation_height: int = 0):
+                 dilation_width: int = 0, dilation_height: int = 0, device_id: int = None):
         """
         Initialize the character detector.
         
@@ -38,8 +38,9 @@ class CharDetector(YOLOBase):
             debug_images_dir: Directory for debug images
             dilation_width: Number of pixels to dilate the character box horizontally
             dilation_height: Number of pixels to dilate the character box vertically
+            device_id: GPU device ID (None for auto-detect)
         """
-        super().__init__(model_path, task, use_onnx, use_cuda)
+        super().__init__(model_path, task, use_onnx, use_cuda, device_id)
         self.confidence_threshold = confidence
         self.save_debug_images = save_debug_images
         self.debug_images_dir = debug_images_dir
@@ -293,7 +294,8 @@ class CharClassifier(YOLOBase):
     
     def __init__(self, model_path: str, task: str, use_onnx: bool, use_cuda: bool, 
                  resolution: tuple, confidence: float,
-                 save_debug_images: bool = False, debug_images_dir: str = None):
+                 save_debug_images: bool = False, debug_images_dir: str = None,
+                 device_id: int = None):
         """
         Initialize the character classifier.
         
@@ -306,8 +308,9 @@ class CharClassifier(YOLOBase):
             confidence: Confidence threshold
             save_debug_images: Whether to save debug images
             debug_images_dir: Directory for debug images
+            device_id: GPU device ID (None for auto-detect)
         """
-        super().__init__(model_path, task, use_onnx, use_cuda)
+        super().__init__(model_path, task, use_onnx, use_cuda, device_id)
         self.resolution = resolution  # Keep this for character classification, as specific size may be needed
         self.confidence_threshold = confidence
         self.save_debug_images = save_debug_images
@@ -511,7 +514,8 @@ class CharacterDetector:
                 save_debug_images=self.save_debug_images,
                 debug_images_dir=self.debug_images_dir,
                 dilation_width=config.char_box_dilation_width,
-                dilation_height=config.char_box_dilation_height
+                dilation_height=config.char_box_dilation_height,
+                device_id=config.device_id
             )
         except Exception as e:
             self.char_detector = None
@@ -528,7 +532,8 @@ class CharacterDetector:
                 resolution=self.char_classifier_resolution,
                 confidence=self.char_classifier_confidence,
                 save_debug_images=self.save_debug_images,
-                debug_images_dir=self.debug_images_dir
+                debug_images_dir=self.debug_images_dir,
+                device_id=config.device_id
             )
             
             # Initialize classifier manager with the classifier
