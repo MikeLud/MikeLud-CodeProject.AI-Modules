@@ -3,13 +3,10 @@ Adapter for the ALPR system to integrate with CodeProject.AI SDK.
 """
 import os
 import sys
-import time
-import json
 import threading
-import numpy as np
 import cv2
 
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 # For PyTorch on Apple silicon
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
@@ -18,9 +15,8 @@ os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 from codeproject_ai_sdk import RequestData, ModuleRunner, LogMethod, JSON
 
 # Import ALPR system
-from alpr.config import ALPRConfig, load_from_env
+from alpr.config import load_from_env
 from alpr.core import ALPRSystem
-from alpr.exceptions import ALPRException
 
 
 class ALPRAdapter(ModuleRunner):
@@ -134,7 +130,7 @@ class ALPRAdapter(ModuleRunner):
             
             # Check if actually using GPU or fell back to CPU
             from alpr.YOLO.session_manager import get_session_manager
-            session_manager = get_session_manager()
+            session_manager = get_session_manager(self.config.device_id)
             if session_manager.is_using_cpu_only():
                 self.inference_device = "CPU"
                 self.inference_library = "ONNX"

@@ -1,10 +1,9 @@
 """
 License plate detection module using YOLOv8 keypoint detection model.
 """
-import os
 import cv2
 import numpy as np
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any
 
 from .base import YOLOBase
 from ..config import ALPRConfig

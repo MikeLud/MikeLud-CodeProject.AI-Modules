@@ -4,7 +4,6 @@ State classification for license plates using YOLOv8.
 """
 import cv2
 import numpy as np
-import logging
 from typing import Dict, Any
 
 from .base import YOLOBase

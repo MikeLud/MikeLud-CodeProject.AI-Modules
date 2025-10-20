@@ -59,7 +59,7 @@ class ALPRConfig:
     use_cuda: bool = False
     use_mps: bool = False  # Apple Silicon GPU
     use_directml: bool = True  # DirectML for Windows
-    device_id: Optional[int] = None  # GPU device ID (None = auto-detect)
+    device_id: int = 0  # GPU device ID (0, 1, 2, or 3)
     
     # Model format (always ONNX)
     onnx_models_dir: str = field(default_factory=lambda: os.path.normpath(os.path.join(os.getcwd(), "models")))
@@ -138,9 +138,9 @@ class ALPRConfig:
         if not 1.0 <= self.clustering_y_scale_factor <= 10.0:
             raise ValueError(f"Clustering Y scale factor must be between 1.0 and 10.0, got {self.clustering_y_scale_factor}")
         
-        # Validate device_id if specified
-        if self.device_id is not None and self.device_id < 0:
-            raise ValueError(f"Device ID must be non-negative, got {self.device_id}")
+        # Validate device_id
+        if self.device_id < 0 or self.device_id > 3:
+            raise ValueError(f"Device ID must be between 0 and 3, got {self.device_id}")
         
         # Validate that required model files exist
         required_models = ["plate_detector", "char_detector", "char_classifier", "state_classifier"]
@@ -241,7 +241,7 @@ def load_from_env() -> ALPRConfig:
     plate_width_inches = float(ModuleOptions.getEnvVariable("PLATE_WIDTH_INCHES", "12.0"))
     plate_height_inches = float(ModuleOptions.getEnvVariable("PLATE_HEIGHT_INCHES", "6.0"))
     speed_tracking_window_frames = int(ModuleOptions.getEnvVariable("SPEED_TRACKING_WINDOW_FRAMES", "20"))
-    speed_min_tracking_frames = int(ModuleOptions.getEnvVariable("SPEED_MIN_TRACKING_FRAMES", "3"))
+    speed_min_tracking_frames = int(ModuleOptions.getEnvVariable("SPEED_MIN_TRACKING_FRAMES", "2"))
     speed_iou_threshold = float(ModuleOptions.getEnvVariable("SPEED_IOU_THRESHOLD", "0.15"))
     speed_centroid_threshold = float(ModuleOptions.getEnvVariable("SPEED_CENTROID_THRESHOLD", "2.0"))
     
@@ -277,8 +277,8 @@ def load_from_env() -> ALPRConfig:
     use_cuda = ModuleOptions.getEnvVariable("USE_CUDA", "False").lower() == "true"
     use_mps = False  # Default to false, will be checked for availability later
     use_directml = ModuleOptions.getEnvVariable("USE_DIRECTML", "True").lower() == "true"
-    device_id_str = ModuleOptions.getEnvVariable("DEVICE_ID", "None")
-    device_id = int(device_id_str) if device_id_str and device_id_str.isdigit() else None
+    device_id_str = ModuleOptions.getEnvVariable("DEVICE_ID", "0")
+    device_id = int(device_id_str) if device_id_str and device_id_str.isdigit() else 0
     
     # Model format (always ONNX)
     onnx_models_dir = os.path.normpath(ModuleOptions.getEnvVariable("ONNX_MODELS_DIR", f"{app_dir}/models"))

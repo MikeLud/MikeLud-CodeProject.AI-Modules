@@ -2,6 +2,7 @@
 Vehicle Speed Tracker for ALPR System.
 Calculates vehicle speed using license plate dimensions and tracking across frames.
 """
+import os
 import time
 import numpy as np
 from typing import Dict, List, Optional, Tuple, Any
@@ -315,17 +316,24 @@ class VehicleSpeedTracker:
         # Calculate time elapsed using frame rate
         time_elapsed = frames_elapsed / self.frame_rate
         
+        # Debug logging for calculation details
+        debug_enabled = os.environ.get("DEBUG_SPEED_CALC", "False").lower() == "true"
+        
         # Use corners for perspective-corrected distance if available
         if first_corners and last_corners and len(first_corners) >= 4 and len(last_corners) >= 4:
-            # Calculate plate width from corners for each position (use bottom edge)
+            # Calculate plate dimensions from corners for each position
             first_corners_arr = np.array(first_corners)
             last_corners_arr = np.array(last_corners)
             
-            # Calculate actual plate width at each position using bottom-left to bottom-right corners
+            # Calculate actual plate width (bottom edge: bottom-left to bottom-right)
             first_plate_width_px = np.linalg.norm(first_corners_arr[3] - first_corners_arr[2])
             last_plate_width_px = np.linalg.norm(last_corners_arr[3] - last_corners_arr[2])
             
-            if first_plate_width_px <= 0 or last_plate_width_px <= 0:
+            # Calculate actual plate height (right edge: top-right to bottom-right)
+            first_plate_height_px = np.linalg.norm(first_corners_arr[1] - first_corners_arr[2])
+            last_plate_height_px = np.linalg.norm(last_corners_arr[1] - last_corners_arr[2])
+            
+            if first_plate_width_px <= 0 or last_plate_width_px <= 0 or first_plate_height_px <= 0 or last_plate_height_px <= 0:
                 return None
             
             # Calculate center of plate from corners
@@ -335,11 +343,23 @@ class VehicleSpeedTracker:
             # Calculate pixel distance between centers
             pixel_distance = np.linalg.norm(last_center - first_center)
             
-            # Use average plate width for scale
-            avg_plate_width_px = (first_plate_width_px + last_plate_width_px) / 2
-            pixels_per_inch = avg_plate_width_px / self.plate_width_inches
+            # Use both width and height for more accurate scale calculation
+            # This accounts for perspective distortion in both dimensions
+            first_pixels_per_inch_w = first_plate_width_px / self.plate_width_inches
+            last_pixels_per_inch_w = last_plate_width_px / self.plate_width_inches
+            first_pixels_per_inch_h = first_plate_height_px / self.plate_height_inches
+            last_pixels_per_inch_h = last_plate_height_px / self.plate_height_inches
+            
+            # Average the scale factors from both dimensions and both positions
+            # This provides better accuracy when plate is at an angle
+            avg_pixels_per_inch = np.mean([
+                first_pixels_per_inch_w, last_pixels_per_inch_w,
+                first_pixels_per_inch_h, last_pixels_per_inch_h
+            ])
+            
+            pixels_per_inch = avg_pixels_per_inch
             distance_inches = pixel_distance / pixels_per_inch
-            avg_plate_width_pixels = avg_plate_width_px  # For debug logging
+            avg_plate_width_pixels = (first_plate_width_px + last_plate_width_px) / 2  # For debug logging
         else:
             # Fallback: use bounding box method
             avg_plate_width_pixels = np.mean([pos[3] for pos in track.positions])
@@ -363,6 +383,22 @@ class VehicleSpeedTracker:
         
         # Convert to MPH (inches/sec * miles/inch * seconds/hour)
         speed_mph = (speed_inches_per_second / self.INCHES_PER_MILE) * self.SECONDS_PER_HOUR
+        
+        # Debug logging if enabled
+        if debug_enabled:
+            method = "corners (W+H)" if first_corners and last_corners else "bbox"
+            print(f"[SPEED DEBUG] Plate {track.plate_number} (track {track_id}) - Method: {method}")
+            print(f"  Frames: {first_frame} -> {last_frame} (elapsed: {frames_elapsed} frames, {time_elapsed:.3f}s)")
+            print(f"  Position: ({first_cx:.1f},{first_cy:.1f}) -> ({last_cx:.1f},{last_cy:.1f})")
+            print(f"  Pixel distance: {pixel_distance:.2f} px")
+            if first_corners and last_corners:
+                print(f"  Plate width: {first_plate_width_px:.2f}px -> {last_plate_width_px:.2f}px (avg: {avg_plate_width_pixels:.2f}px = {self.plate_width_inches:.1f}\")")
+                print(f"  Plate height: {first_plate_height_px:.2f}px -> {last_plate_height_px:.2f}px (avg: {(first_plate_height_px + last_plate_height_px)/2:.2f}px = {self.plate_height_inches:.1f}\")")
+            else:
+                print(f"  Plate width: {avg_plate_width_pixels:.2f} px = {self.plate_width_inches:.1f} inches")
+            print(f"  Pixels per inch: {pixels_per_inch:.2f}")
+            print(f"  Distance traveled: {distance_inches:.2f} inches")
+            print(f"  Speed: {speed_mph:.1f} mph (raw), {float(np.mean(list(track.speeds) + [speed_mph])):.1f} mph (smoothed)")
         
         # Store speed for smoothing
         track.speeds.append(speed_mph)

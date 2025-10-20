@@ -5,7 +5,7 @@ This is the main entry point that coordinates detection, classification, and org
 import cv2
 import numpy as np
 import logging
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any
 
 from .base import YOLOBase
 from ..config import ALPRConfig

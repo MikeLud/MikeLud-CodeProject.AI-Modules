@@ -13,7 +13,6 @@ hardware acceleration support for CUDA, MPS (Apple Silicon), and CPU.
 
 from .config import ALPRConfig, load_from_env
 from .core import ALPRSystem
-from .adapter import ALPRAdapter
 from .exceptions import ALPRException, ModelLoadingError, InferenceError, CharacterRecognitionError
 
 __version__ = "1.0.0"
@@ -21,7 +20,6 @@ __all__ = [
     "ALPRConfig",
     "load_from_env", 
     "ALPRSystem",
-    "ALPRAdapter",
     "ALPRException",
     "ModelLoadingError",
     "InferenceError", 

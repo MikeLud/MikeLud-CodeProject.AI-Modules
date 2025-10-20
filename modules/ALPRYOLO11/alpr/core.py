@@ -6,9 +6,8 @@ import cv2
 import numpy as np
 import time
 
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any
 from .config import ALPRConfig
-from .exceptions import ALPRException, ModelLoadingError
 from .YOLO.plate_detector import PlateDetector
 from .YOLO.character_detector import CharacterDetector
 from .YOLO.state_classifier import StateClassifier

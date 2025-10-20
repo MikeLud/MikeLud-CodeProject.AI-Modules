@@ -2,7 +2,7 @@
   "Modules": {
     "ALPRYOLO11": {
       "Name": "License Plate Recognition (YOLO11)",
-      "Version": "1.0.3",
+      "Version": "1.0.4",
       "PublishingInfo" : {
         "Description" : "Provides Automatic License Plate Recognition (ALPR) using YOLO11 models",
         "Category"    : "Computer Vision",
@@ -44,7 +44,7 @@
         "USE_ONNX"                  : "True",
         "USE_CUDA"                  : "False",
         "USE_DIRECTML"              : "True",
-        "DEVICE_ID"                 : "None",
+        "DEVICE_ID"                 : "0",
         "ONNX_MODELS_DIR"           : "%CURRENT_MODULE_PATH%/models",
         "SAVE_DEBUG_IMAGES"         : "False",
         "DEBUG_IMAGES_DIR"          : "%CURRENT_MODULE_PATH%/debug_images"
@@ -61,7 +61,8 @@
           { "ModuleVersion": "1.0.0", "ServerVersionRange": [ "2.9.4", "" ], "ReleaseDate": "2025-02-28", "ReleaseNotes": "Initial Release", "Importance": "Major" },
           { "ModuleVersion": "1.0.1", "ServerVersionRange": [ "2.9.4", "" ], "ReleaseDate": "2025-10-13", "ReleaseNotes": "Added Smart Device Selection.", "Importance": "Minor" },
           { "ModuleVersion": "1.0.2", "ServerVersionRange": [ "2.9.4", "" ], "ReleaseDate": "2026-10-14", "ReleaseNotes": "Fixed Smart Device Selection.", "Importance": "Minor" },
-          { "ModuleVersion": "1.0.3", "ServerVersionRange": [ "2.9.4", "" ], "ReleaseDate": "2026-10-18", "ReleaseNotes": "Fixed Smart Device Selection.", "Importance": "Minor" }
+          { "ModuleVersion": "1.0.3", "ServerVersionRange": [ "2.9.4", "" ], "ReleaseDate": "2026-10-18", "ReleaseNotes": "Fixed Smart Device Selection.", "Importance": "Minor" },
+          { "ModuleVersion": "1.0.4", "ServerVersionRange": [ "2.9.4", "" ], "ReleaseDate": "2026-10-20", "ReleaseNotes": "Removed Smart Device Selection.", "Importance": "Minor" }
         ]
       },
       "ModelRequirements" : [{
@@ -95,7 +96,7 @@
           "Label": "Debug Image Saving",
           "Options": [
             { "Label": "Disable debug images (Default)", "Setting": "SAVE_DEBUG_IMAGES", "Value": "False" },
-            { "Label": "Enable debug images", "Setting": "SAVE_DEBUG_IMAGES", "Value": "True" }
+            { "Label": "Enable debug images", "Setting": "SAVE_DEBUG_IMAGES", "Value": "False" }
           ]
         },
         {
@@ -190,8 +191,7 @@
         {
           "Label": "GPU Device Selection",
           "Options": [
-            { "Label": "Auto-detect (Default)", "Setting": "DEVICE_ID", "Value": "None" },
-            { "Label": "Device 0",              "Setting": "DEVICE_ID", "Value": "0" },
+            { "Label": "Device 0 (Default)",    "Setting": "DEVICE_ID", "Value": "0" },
             { "Label": "Device 1",              "Setting": "DEVICE_ID", "Value": "1" },
             { "Label": "Device 2",              "Setting": "DEVICE_ID", "Value": "2" },
             { "Label": "Device 3",              "Setting": "DEVICE_ID", "Value": "3" }
@@ -200,7 +200,7 @@
       },
       "RouteMaps": [
         {
-          "Name": "ALPR Detection",
+          "Name": "License Plate Recognition (YOLO11)",
           "Route": "vision/alpr",
           "Method": "POST",
           "Command": "detect",

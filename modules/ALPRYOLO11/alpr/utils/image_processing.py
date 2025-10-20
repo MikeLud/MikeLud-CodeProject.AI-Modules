@@ -4,7 +4,6 @@ Image processing utilities for the ALPR system.
 import os
 import cv2
 import numpy as np
-import time
 from datetime import datetime
 from typing import List, Tuple, Optional, Union
 from ..exceptions import ImageProcessingError

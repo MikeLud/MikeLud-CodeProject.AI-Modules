@@ -3,13 +3,10 @@ Adapter for the ALPR system to integrate with CodeProject.AI SDK.
 """
 import os
 import sys
-import time
-import json
 import threading
-import numpy as np
 import cv2
 
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 # For PyTorch on Apple silicon
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
@@ -18,9 +15,8 @@ os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 from codeproject_ai_sdk import RequestData, ModuleRunner, LogMethod, JSON
 
 # Import ALPR system
-from .config import ALPRConfig, load_from_env
+from .config import load_from_env
 from .core import ALPRSystem
-from .exceptions import ALPRException
 
 
 class ALPRAdapter(ModuleRunner):

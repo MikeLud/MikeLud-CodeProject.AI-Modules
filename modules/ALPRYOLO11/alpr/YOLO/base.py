@@ -4,7 +4,7 @@ Base classes for YOLO models using ONNX runtime.
 import os
 import numpy as np
 import cv2
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import onnxruntime as ort

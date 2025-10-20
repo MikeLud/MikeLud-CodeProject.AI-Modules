@@ -33,7 +33,7 @@ POST /v1/vision/alpr
 
 ## Technical Details
 
-This module uses YOLOv8 models with ONNX Runtime for various detection and recognition tasks:
+This module uses YOLO11 models with ONNX Runtime for various detection and recognition tasks:
 
 - **plate_detector.onnx**: Detects license plates in the image
 - **state_classifier.onnx**: Identifies the US state for a license plate
@@ -50,11 +50,13 @@ The module supports several configuration options through environment variables:
 
 ### Core Settings
 
-- `ENABLE_STATE_DETECTION`: Enable/disable state identification (default: true)
-- `ENABLE_VEHICLE_DETECTION`: Enable/disable vehicle detection (default: true)
-- `ENABLE_SPEED_CALCULATION`: Enable/disable vehicle speed calculation (default: false)
-- `PLATE_ASPECT_RATIO`: Set a specific aspect ratio for license plates (default: 4.0)
+- `ENABLE_STATE_DETECTION`: Enable/disable state identification (default: False)
+- `ENABLE_VEHICLE_DETECTION`: Enable/disable vehicle detection (default: False)
+- `ENABLE_SPEED_CALCULATION`: Enable/disable vehicle speed calculation (default: True)
+- `PLATE_ASPECT_RATIO`: Set a specific aspect ratio for license plates (default: 2.5)
 - `CORNER_DILATION_PIXELS`: Configure corner dilation for license plate extraction (default: 5)
+- `CHAR_BOX_DILATION_WIDTH`: Horizontal dilation for character bounding boxes (default: 0)
+- `CHAR_BOX_DILATION_HEIGHT`: Vertical dilation for character bounding boxes (default: 0)
 
 ### Speed Calculation Settings
 
@@ -62,16 +64,20 @@ The module supports several configuration options through environment variables:
 - `PLATE_WIDTH_INCHES`: Real-world license plate width in inches (default: 12.0 for US plates)
 - `PLATE_HEIGHT_INCHES`: Real-world license plate height in inches (default: 6.0 for US plates)
 - `SPEED_TRACKING_WINDOW_FRAMES`: Rolling window size in frames for tracking (default: 20)
-- `SPEED_MIN_TRACKING_FRAMES`: Minimum frames needed before calculating speed (default: 3)
+- `SPEED_MIN_TRACKING_FRAMES`: Minimum frames needed before calculating speed (default: 2)
+- `SPEED_IOU_THRESHOLD`: IoU threshold for matching plates across frames (default: 0.15)
+- `SPEED_CENTROID_THRESHOLD`: Maximum normalized centroid distance for matching (default: 2.0)
 
 ### Model Configuration
 
 - `USE_ONNX`: Always true - this module only uses ONNX models for optimized inference
-- `ONNX_MODELS_DIR`: Directory path for ONNX models (default: "models/onnx")
+- `ONNX_MODELS_DIR`: Directory path for ONNX models (default: "models")
+- `USE_DIRECTML`: Enable DirectML GPU acceleration on Windows (default: True)
+- `DEVICE_ID`: GPU device ID to use (0-3, default: 0)
 
 ### Debug Options
 
-- `SAVE_DEBUG_IMAGES`: Enable/disable saving debug images (default: false)
+- `SAVE_DEBUG_IMAGES`: Enable/disable saving debug images (default: False)
 - `DEBUG_IMAGES_DIR`: Directory path for debug images (default: "debug_images")
 
 ### Confidence Thresholds
@@ -164,10 +170,12 @@ This module includes an innovative vehicle speed calculation feature that uses t
 To enable speed calculation:
 
 ```bash
-ENABLE_SPEED_CALCULATION=true
+ENABLE_SPEED_CALCULATION=True
 FRAME_RATE=20.0  # Your camera's frame rate
 PLATE_WIDTH_INCHES=12.0  # Standard US plate width
 PLATE_HEIGHT_INCHES=6.0  # Standard US plate height
+SPEED_IOU_THRESHOLD=0.15  # IoU threshold for plate matching
+SPEED_CENTROID_THRESHOLD=2.0  # Centroid distance threshold
 ```
 
 ### API Response
@@ -179,6 +187,7 @@ When speed calculation is enabled, each detected plate in the JSON response incl
 - `tracking_frames`: Number of frames the plate has been tracked
 
 Example response:
+
 ```json
 {
   "success": true,
@@ -197,6 +206,7 @@ Example response:
     }
   ]
 }
+
 ```
 
 ### Accuracy Considerations
@@ -225,32 +235,38 @@ This module uses ONNX models exclusively for optimized inference performance.
 
 ### Setup
 
-1. Ensure ONNX models are available in `models/onnx/` directory
+1. Ensure ONNX models are available in `models/` directory
 2. Install ONNX Runtime with DirectML: `pip install onnxruntime-directml==1.23.0`
 3. Models will automatically use GPU acceleration when available
 
 ## Project Structure
 
 ```text
-alpr/
+ALPRYOLO11/
+├── alpr_adapter.py     # Main entry point and CodeProject.AI integration
 ├── __init__.py
-├── adapter.py          # CodeProject.AI integration
-├── config.py           # Configuration management
-├── core.py             # Main ALPR processing pipeline
-├── exceptions.py       # Custom exception classes
-├── utils/
+├── alpr/
 │   ├── __init__.py
-│   └── image_processing.py  # Image processing utilities
-└── YOLO/
-    ├── __init__.py
-    ├── base.py                 # Base YOLO model class
-    ├── session_manager.py      # ONNX session management with DirectML fallback
-    ├── plate_detector.py       # License plate detection
-    ├── character_detector.py   # Character detection and recognition
-    ├── char_organizer.py       # Stable character ordering logic
-    ├── char_classifier_manager.py  # Character classification
-    ├── state_classifier.py     # State identification
-    └── vehicle_detector.py     # Vehicle detection and classification
+│   ├── config.py           # Configuration management
+│   ├── core.py             # Main ALPR processing pipeline
+│   ├── exceptions.py       # Custom exception classes
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── image_processing.py  # Image processing utilities
+│   │   └── speed_tracker.py     # Vehicle speed tracking
+│   └── YOLO/
+│       ├── __init__.py
+│       ├── base.py                 # Base YOLO model class
+│       ├── session_manager.py      # ONNX session management with DirectML fallback
+│       ├── plate_detector.py       # License plate detection
+│       ├── character_detector.py   # Character detection and recognition
+│       ├── char_organizer.py       # Stable character ordering logic
+│       ├── char_classifier_manager.py  # Character classification
+│       ├── state_classifier.py     # State identification
+│       └── vehicle_detector.py     # Vehicle detection and classification
+├── models/              # ONNX model files
+├── history/             # Documentation history
+└── readme.md
 ```
 
 ## Troubleshooting
@@ -288,7 +304,7 @@ alpr/
 
 #### Model loading errors
 
-- Verify all ONNX model files exist in the models/onnx directory
+- Verify all ONNX model files exist in the models/ directory
 - Check file permissions
 - Ensure sufficient disk space and memory
 - Verify ONNX Runtime DirectML is properly installed
@@ -306,8 +322,8 @@ Enable debug mode for detailed troubleshooting:
 
 - **Python**: 3.8 or higher
 - **ONNX Runtime DirectML**: 1.23.0 (for Windows GPU acceleration)
-- **OpenCV**: 4.6.0 or higher
-- **NumPy**: For numerical operations
+- **OpenCV**: 4.12.0 or higher
+- **NumPy**: 2.2.6 or higher
 - **CodeProject.AI SDK**: For integration with CodeProject.AI Server
 
 ## Recent Improvements
