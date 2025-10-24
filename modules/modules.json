@@ -1,5 +1,5 @@
 [
-    {
+  {
     "ModuleId": "ALPRYOLO11",
     "Name": "License Plate Reader (YOLO11-ONNX)",
     "Version": "1.0.4",
@@ -68,6 +68,51 @@
           ],
           "ReleaseDate": "2025-10-20",
           "ReleaseNotes": "Removed Smart Device Selection.",
+          "Importance": "Minor"
+        }
+      ]
+    },
+    "Downloads": 0
+  },
+  {
+    "ModuleId": "ALPRYOLO11NET",
+    "Name": "License Plate Recognition (YOLO11 .NET)",
+    "Version": "1.1.0",
+    "PublishingInfo": {
+      "Description": "Provides Automatic License Plate Recognition (ALPR) using YOLO11 models in .NET 9",
+      "IconURL": "",
+      "Category": "Computer Vision",
+      "Stack": ".NET, ONNX, YOLO",
+      "License": "MIT",
+      "LicenseUrl": "https://opensource.org/licenses/MIT",
+      "Author": "Mike Lud",
+      "Homepage": "https://github.com/MikeLud/MikeLud-CodeProject.AI-Modules",
+      "BasedOn": "YOLO11 models with ONNX Runtime",
+      "BasedOnUrl": "https://onnxruntime.ai/"
+    },
+    "InstallOptions": {
+      "Platforms": [
+        "windows"
+      ],
+      "ModuleReleases": [
+        {
+          "ModuleVersion": "1.0.0",
+          "ServerVersionRange": [
+            "2.9.4",
+            ""
+          ],
+          "ReleaseDate": "2025-10-21",
+          "ReleaseNotes": "Initial .NET Release",
+          "Importance": "Major"
+        },
+        {
+          "ModuleVersion": "1.1.0",
+          "ServerVersionRange": [
+            "2.9.4",
+            ""
+          ],
+          "ReleaseDate": "2025-10-23",
+          "ReleaseNotes": "Added GPU DirectML support and additional UI settings.",
           "Importance": "Minor"
         }
       ]
