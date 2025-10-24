@@ -77,7 +77,7 @@
   {
     "ModuleId": "ALPRYOLO11NET",
     "Name": "License Plate Recognition (YOLO11 .NET)",
-    "Version": "1.1.0",
+    "Version": "1.1.1",
     "PublishingInfo": {
       "Description": "Provides Automatic License Plate Recognition (ALPR) using YOLO11 models in .NET 9",
       "IconURL": "",
@@ -113,6 +113,16 @@
           ],
           "ReleaseDate": "2025-10-23",
           "ReleaseNotes": "Added GPU DirectML support and additional UI settings.",
+          "Importance": "Minor"
+        },
+        {
+          "ModuleVersion": "1.1.1",
+          "ServerVersionRange": [
+            "2.9.4",
+            ""
+          ],
+          "ReleaseDate": "2025-10-24",
+          "ReleaseNotes": "Fixed most of the accuracy issues.",
           "Importance": "Minor"
         }
       ]
