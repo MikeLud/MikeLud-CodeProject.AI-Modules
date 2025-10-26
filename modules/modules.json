@@ -128,6 +128,71 @@
       ]
     },
     "Downloads": 0
+  },
+  {
+    "ModuleId": "ObjectDetectionYOLO11Net",
+    "Name": "Object Detection (YOLO11 .NET)",
+    "Version": "1.3.0",
+    "PublishingInfo": {
+      "Description": "Provides multi-task Object Detection, Pose Estimation, Instance Segmentation, and Image Classification using YOLO11 ONNX models with DirectML/CUDA support", 
+      "IconURL": "",
+      "Category": "Computer Vision",
+      "Stack": "C#, ONNX, DirectML, YOLO11",
+      "License": "MIT",
+      "LicenseUrl": "https://opensource.org/licenses/MIT",
+      "Author": "Mike Lud",
+      "Homepage": "https://github.com/MikeLud/MikeLud-CodeProject.AI-Modules",
+      "BasedOn": "YOLO11 models with ONNX Runtime",
+      "BasedOnUrl": "https://onnxruntime.ai/"
+    },
+    "InstallOptions": {
+      "Platforms": [
+        "all", "!windows-arm64"
+      ],
+      "ModuleReleases": [
+        {
+          "ModuleVersion": "1.0.0",
+          "ServerVersionRange": [
+            "2.9.4",
+            ""
+          ],
+          "ReleaseDate": "2025-10-21",
+          "ReleaseNotes": "Initial YOLO11 multi-task module.",
+          "Importance": "Major"
+        },
+        {
+          "ModuleVersion": "1.1.0",
+          "ServerVersionRange": [
+            "2.9.4",
+            ""
+          ],
+          "ReleaseDate": "2025-10-23",
+          "ReleaseNotes": "Added GPU device ID selection support (0-4).",
+          "Importance": "Minor"
+        },
+        {
+          "ModuleVersion": "1.2.0",
+          "ServerVersionRange": [
+            "2.9.4",
+            ""
+          ],
+          "ReleaseDate": "2025-10-24",
+          "ReleaseNotes": "Cleaned logging output - removed startup messages.",
+          "Importance": "Minor"
+        },
+        {
+          "ModuleVersion": "1.3.0",
+          "ServerVersionRange": [
+            "2.9.4",
+            ""
+          ],
+          "ReleaseDate": "2025-10-25",
+          "ReleaseNotes": "Fixed most of the issues with explore.html.",
+          "Importance": "Minor"
+        }
+      ]
+    },
+    "Downloads": 0
   }
 ]
 /*
