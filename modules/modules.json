@@ -189,6 +189,16 @@
           "ReleaseDate": "2025-10-25",
           "ReleaseNotes": "Fixed most of the issues with explore.html.",
           "Importance": "Minor"
+        },
+        {
+          "ModuleVersion": "1.4.0",
+          "ServerVersionRange": [
+            "2.9.4",
+            ""
+          ],
+          "ReleaseDate": "2025-11-02",
+          "ReleaseNotes": "Added YOLOv5 custom model support from custom-models-v5 directory. Models with -v5 suffix automatically use YOLOv5 engine.",
+          "Importance": "Minor"
         }
       ]
     },
