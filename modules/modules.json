@@ -132,7 +132,7 @@
   {
     "ModuleId": "ObjectDetectionYOLO11Net",
     "Name": "Object Detection (YOLO11 .NET)",
-    "Version": "1.3.0",
+    "Version": "1.4.0",
     "PublishingInfo": {
       "Description": "Provides multi-task Object Detection, Pose Estimation, Instance Segmentation, and Image Classification using YOLO11 ONNX models with DirectML/CUDA support", 
       "IconURL": "",
@@ -147,7 +147,7 @@
     },
     "InstallOptions": {
       "Platforms": [
-        "all", "!windows-arm64"
+        "windows"
       ],
       "ModuleReleases": [
         {
